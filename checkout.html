@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Zamówienie — TinyHugs</title>
   <link rel="stylesheet" href="style.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  
   <style>
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(24px); }
@@ -463,18 +463,6 @@
           <div id="paczkomat-section" class="paczkomat-section hidden">
             <div id="selected-paczkomat-display"></div>
             <div id="paczkomat-map-wrapper">
-              <p style="font-size:0.82rem;color:var(--text-muted);margin:0.8rem 0 0.5rem;">Wpisz miasto lub kod pocztowy i kliknij pinezkę:</p>
-              <div class="paczkomat-search">
-                <input type="text" id="paczkomat-search" placeholder="np. Warszawa, Kraków, 30-001..."/>
-                <button onclick="searchPaczkomat()">🔍 Szukaj</button>
-              </div>
-              <div class="map-wrap">
-                <div id="map-loading">
-                  <div class="spin-ring"></div>
-                  <span style="font-size:0.82rem;color:var(--text-muted);">Ładowanie paczkomatów...</span>
-                </div>
-                <div id="paczkomat-map"></div>
-              </div>
             </div>
           </div>
         </div>
@@ -535,7 +523,7 @@
   </div>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
 <script src="i18n.js"></script>
 <script src="nav.js"></script>
 <script src="products.js"></script>
@@ -548,8 +536,6 @@ let currentStep = 1;
 let selectedShippingId = null;
 let selectedShippingCost = 0;
 let selectedPaczkomat = null;
-let leafletMap = null;
-let markersLayer = null;
 
 // ===== KROKI =====
 function setStep(n) {
@@ -696,88 +682,48 @@ function placeOrder() {
   alert("✅ Zamówienie złożone! Zaraz zintegrujemy płatność Stripe.");
 }
 
-// ===== MAPA =====
-async function initMap() {
-  if (leafletMap) { setTimeout(() => leafletMap.invalidateSize(), 150); return; }
+// ===== MAPA (InPost GeoWidget) =====
+let mapInited = false;
 
-  leafletMap = L.map("paczkomat-map").setView([52.0, 19.5], 6);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
-    maxZoom: 19
-  }).addTo(leafletMap);
+function initMap() {
+  if (mapInited) return;
+  mapInited = true;
 
-  markersLayer = L.layerGroup().addTo(leafletMap);
-  document.getElementById("map-loading").style.display = "flex";
+  const wrapper = document.getElementById("paczkomat-map-wrapper");
+  wrapper.innerHTML = `
+    <p style="font-size:0.82rem;color:var(--text-muted);margin:0.8rem 0 0.5rem;">
+      Kliknij paczkomat na mapie aby go wybrać:
+    </p>
+    <div id="easypack-map" style="width:100%;height:380px;border-radius:14px;border:2px solid var(--border);overflow:hidden;"></div>
+  `;
 
-  const pinkIcon = L.divIcon({
-    className: "",
-    html: `<div style="background:#E8899F;width:13px;height:13px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.35);transition:transform 0.15s;"></div>`,
-    iconSize: [13,13], iconAnchor: [6,6], popupAnchor: [0,-8]
-  });
+  // CSS widgetu
+  const css = document.createElement("link");
+  css.rel = "stylesheet";
+  css.href = "https://geowidget.easypack24.net/stylesheets/inpost-geowidget.css";
+  document.head.appendChild(css);
 
-  try {
-    const r = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://api.inpost.pl/v1/points?type=parcel_locker&fields=name,address,location&per_page=15000&page=1"));
-    const d = await r.json();
-    loadMarkers(d.items || [], pinkIcon);
-  } catch {
-    loadMarkers(FALLBACK, pinkIcon);
-  }
-
-  document.getElementById("map-loading").style.display = "none";
+  // JS widgetu
+  const js = document.createElement("script");
+  js.src = "https://geowidget.easypack24.net/js/sdk-for-js.js";
+  js.onload = () => {
+    easyPack.init({
+      defaultLocale: "pl",
+      mapType: "osm",
+      searchType: "osm",
+      points: { types: ["parcel_locker"] },
+      display: { showTypesFilters: false },
+    });
+    easyPack.mapWidget("easypack-map", (point) => {
+      const street = point.address?.line1 || "";
+      const city   = point.address?.line2 || "";
+      selectPaczkomat(point.name, street, city);
+    });
+  };
+  document.head.appendChild(js);
 }
 
-function loadMarkers(items, icon) {
-  markersLayer.clearLayers();
-  items.forEach(p => {
-    const lat  = p.location?.latitude  ?? p.latitude;
-    const lng  = p.location?.longitude ?? p.longitude;
-    const name = p.name;
-    const str  = p.address?.line1 ?? "";
-    const city = p.address?.line2 ?? "";
-    if (!lat || !lng) return;
-    const m = L.marker([lat,lng], {icon});
-    m.bindPopup(`
-      <div class="popup-id">📦 ${name}</div>
-      <div class="popup-addr">${str}<br/>${city}</div>
-      <div class="popup-hrs">✅ Czynny 24/7</div>
-      <button class="popup-btn" onclick="selectPaczkomat('${name}','${str.replace(/'/g,"\\'")}','${city.replace(/'/g,"\\'")}')">Wybierz ten paczkomat</button>
-    `, {maxWidth:220});
-    markersLayer.addLayer(m);
-  });
-}
-
-function searchPaczkomat() {
-  const q = document.getElementById("paczkomat-search").value.trim();
-  if (!q || !leafletMap) return;
-  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q+", Polska")}&format=json&limit=1`)
-    .then(r=>r.json())
-    .then(res => {
-      if (res.length) leafletMap.setView([+res[0].lat, +res[0].lon], 14);
-      else alert("Nie znaleziono: " + q);
-    }).catch(()=>alert("Błąd wyszukiwania"));
-}
-
-function selectPaczkomat(id, street, city) {
-  selectedPaczkomat = {id, street, city};
-  leafletMap.closePopup();
-
-  const display = document.getElementById("selected-paczkomat-display");
-  display.innerHTML = `
-    <div class="selected-paczkomat-box">
-      <span>📦</span>
-      <div><strong>${id}</strong><br/><span style="font-size:0.8rem;color:var(--text-muted);">${street}, ${city}</span></div>
-      <button class="change-btn" onclick="changePaczkomat()">Zmień</button>
-    </div>`;
-  document.getElementById("paczkomat-map-wrapper").classList.add("hidden");
-  renderSummary();
-}
-
-function changePaczkomat() {
-  selectedPaczkomat = null;
-  document.getElementById("paczkomat-map-wrapper").classList.remove("hidden");
-  document.getElementById("selected-paczkomat-display").innerHTML = "";
-  setTimeout(() => leafletMap && leafletMap.invalidateSize(), 100);
-}
+function searchPaczkomat() { /* widget ma wbudowane wyszukiwanie */ }
 
 // ===== PODSUMOWANIE =====
 function renderSummary() {
@@ -807,21 +753,7 @@ function renderSummary() {
   document.getElementById("sum-total").textContent = total ? formatPrice(total + ship) : "—";
 }
 
-// ===== FALLBACK PACZKOMATY =====
-const FALLBACK = [
-  {name:"WAW001",location:{latitude:52.2297,longitude:21.0122},address:{line1:"ul. Marszałkowska 10",line2:"Warszawa"}},
-  {name:"WAW002",location:{latitude:52.1959,longitude:21.0150},address:{line1:"ul. Puławska 45",line2:"Warszawa"}},
-  {name:"KRK001",location:{latitude:50.0647,longitude:19.9450},address:{line1:"ul. Floriańska 8",line2:"Kraków"}},
-  {name:"GDA001",location:{latitude:54.3520,longitude:18.6466},address:{line1:"ul. Długa 12",line2:"Gdańsk"}},
-  {name:"WRO001",location:{latitude:51.1079,longitude:17.0385},address:{line1:"ul. Świdnicka 30",line2:"Wrocław"}},
-  {name:"POZ001",location:{latitude:52.4064,longitude:16.9252},address:{line1:"ul. Półwiejska 40",line2:"Poznań"}},
-  {name:"LDZ001",location:{latitude:51.7592,longitude:19.4560},address:{line1:"ul. Piotrkowska 100",line2:"Łódź"}},
-  {name:"KAT001",location:{latitude:50.2649,longitude:19.0238},address:{line1:"ul. 3 Maja 7",line2:"Katowice"}},
-  {name:"SZC001",location:{latitude:53.4285,longitude:14.5528},address:{line1:"ul. Wojska Polskiego 5",line2:"Szczecin"}},
-  {name:"BIA001",location:{latitude:53.1325,longitude:23.1688},address:{line1:"ul. Lipowa 20",line2:"Białystok"}},
-  {name:"SLU001",location:{latitude:54.4641,longitude:17.0286},address:{line1:"ul. Wojska Polskiego 4",line2:"Słupsk"}},
-  {name:"UST001",location:{latitude:54.5804,longitude:16.8619},address:{line1:"ul. Marynarki Polskiej 5",line2:"Ustka"}},
-];
+
 
 // Animacja shake dla błędów
 const shakeCSS = document.createElement("style");
