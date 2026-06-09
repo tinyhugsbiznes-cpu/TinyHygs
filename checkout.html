@@ -7,162 +7,404 @@
   <link rel="stylesheet" href="style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
   <style>
-    .checkout-page { max-width: 1000px; margin: 2.5rem auto; padding: 0 2rem 4rem; }
-    .checkout-page h1 { font-family: var(--font-display); font-size: 2rem; margin-bottom: 2rem; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50%      { transform: scale(1.04); }
+    }
+    @keyframes slideRight {
+      from { width: 0; }
+    }
 
-    .checkout-layout { display: grid; grid-template-columns: 1fr 320px; gap: 2rem; align-items: start; }
+    body { background: linear-gradient(135deg, #FDF6F0 0%, #FAF0F5 100%); min-height: 100vh; }
+
+    .co-page {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem 5rem;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .co-page h1 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
 
     /* KROKI */
-    .steps { display: flex; gap: 0; margin-bottom: 2rem; }
-    .step { flex: 1; display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--text-muted); }
-    .step-num { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
-    .step.active .step-num { background: var(--brown); border-color: var(--brown); color: #fff; }
-    .step.active { color: var(--text); font-weight: 600; }
-    .step.done .step-num { background: #4A7A4A; border-color: #4A7A4A; color: #fff; }
-    .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 0.3rem; }
+    .steps {
+      display: flex;
+      align-items: center;
+      margin-bottom: 2.5rem;
+      gap: 0;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      transition: color 0.3s;
+      cursor: default;
+    }
+    .step-num {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700;
+      transition: all 0.35s cubic-bezier(.4,0,.2,1);
+      background: var(--warm-white);
+    }
+    .step.active .step-num  { background: var(--brown); border-color: var(--brown); color: #fff; transform: scale(1.1); box-shadow: 0 0 0 4px rgba(139,94,60,0.15); }
+    .step.active            { color: var(--text); font-weight: 600; }
+    .step.done  .step-num   { background: #5aaa6a; border-color: #5aaa6a; color: #fff; }
+    .step.done              { color: #5aaa6a; }
+    .step-line {
+      flex: 1;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 0.6rem;
+      overflow: hidden;
+      position: relative;
+    }
+    .step-line-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--brown), var(--blush-dark));
+      border-radius: 2px;
+      width: 0;
+      transition: width 0.5s cubic-bezier(.4,0,.2,1);
+    }
 
-    /* SEKCJE FORMULARZA */
-    .form-section { background: var(--warm-white); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 2px 10px var(--shadow); }
-    .form-section h2 { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
+    /* LAYOUT */
+    .co-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 1.5rem;
+      align-items: start;
+    }
 
+    /* PANEL */
+    .co-panel {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(237,229,218,0.8);
+      border-radius: 20px;
+      padding: 1.6rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 24px rgba(139,94,60,0.07);
+      animation: fadeUp 0.4s ease both;
+    }
+    .co-panel:nth-child(2) { animation-delay: 0.08s; }
+    .co-panel:nth-child(3) { animation-delay: 0.16s; }
+    .co-panel:nth-child(4) { animation-delay: 0.24s; }
+
+    .co-panel h2 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      margin-bottom: 1.3rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      color: var(--text);
+    }
+
+    /* FORMULARZ */
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
     .form-row.full { grid-template-columns: 1fr; }
-
     .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
-    .form-group label { font-size: 0.82rem; font-weight: 500; color: var(--text-muted); }
-    .form-group input, .form-group select {
-      padding: 0.65rem 0.9rem;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
+    .form-group label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+
+    .form-group input,
+    .form-group select {
+      padding: 0.7rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 12px;
       font-size: 0.9rem;
       font-family: var(--font-body);
       color: var(--text);
-      background: var(--cream);
+      background: #fff;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
     }
-    .form-group input:focus, .form-group select:focus { border-color: var(--brown); background: #fff; }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--brown);
+      box-shadow: 0 0 0 3px rgba(139,94,60,0.1);
+      transform: translateY(-1px);
+    }
 
     /* KRAJ */
-    .country-note { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem; }
-    .free-ship-note { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: #4A7A4A; font-weight: 600; margin-top: 0.4rem; }
+    .free-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: #edfaee; color: #3a8a4a;
+      border: 1px solid #b8e8bc;
+      border-radius: 50px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.8rem; font-weight: 600;
+      margin-top: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+    .intl-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: #fff8ee; color: #8B6020;
+      border: 1px solid #f0d8a0;
+      border-radius: 50px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.8rem; font-weight: 600;
+      margin-top: 0.5rem;
+    }
 
     /* METODY DOSTAWY */
     .shipping-methods { display: flex; flex-direction: column; gap: 0.7rem; }
     .shipping-method {
       display: flex; align-items: center; gap: 1rem;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 0.9rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
       cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
+      transition: all 0.25s cubic-bezier(.4,0,.2,1);
+      background: #fff;
+      position: relative;
+      overflow: hidden;
     }
-    .shipping-method:hover { border-color: var(--brown-light); }
-    .shipping-method.selected { border-color: var(--brown); background: #FDF5EE; }
-    .shipping-method input[type=radio] { accent-color: var(--brown); width: 18px; height: 18px; flex-shrink: 0; }
-    .shipping-logo { font-size: 1.4rem; flex-shrink: 0; }
-    .shipping-info { flex: 1; }
-    .shipping-name { font-weight: 600; font-size: 0.9rem; }
-    .shipping-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.1rem; }
-    .shipping-price { font-weight: 700; font-size: 0.95rem; color: var(--brown); white-space: nowrap; }
+    .shipping-method::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(139,94,60,0.04), rgba(242,184,198,0.06));
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .shipping-method:hover { border-color: var(--brown-light); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(139,94,60,0.1); }
+    .shipping-method:hover::before { opacity: 1; }
+    .shipping-method.selected { border-color: var(--brown); background: #FDF5EE; box-shadow: 0 4px 20px rgba(139,94,60,0.15); }
+    .shipping-method.selected::before { opacity: 1; }
 
-    /* MAPA PACZKOMATÓW */
-    .paczkomat-section { margin-top: 1rem; }
-    .paczkomat-search { display: flex; gap: 0.5rem; margin-bottom: 0.8rem; }
-    .paczkomat-search input { flex: 1; padding: 0.6rem 0.9rem; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 0.88rem; font-family: var(--font-body); outline: none; }
+    .shipping-method input[type=radio] { display: none; }
+    .radio-circle {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .shipping-method.selected .radio-circle {
+      border-color: var(--brown);
+      background: var(--brown);
+    }
+    .radio-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #fff;
+      opacity: 0; transform: scale(0);
+      transition: all 0.2s;
+    }
+    .shipping-method.selected .radio-dot { opacity: 1; transform: scale(1); }
+
+    .shipping-logo { font-size: 1.6rem; flex-shrink: 0; }
+    .shipping-info { flex: 1; }
+    .shipping-name { font-weight: 700; font-size: 0.92rem; color: var(--text); }
+    .shipping-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; }
+    .shipping-price { font-weight: 700; font-size: 1rem; color: var(--brown); white-space: nowrap; }
+    .shipping-free  { font-weight: 700; font-size: 0.9rem; color: #3a8a4a; white-space: nowrap; }
+
+    /* MAPA */
+    .paczkomat-section { margin-top: 1rem; overflow: hidden; }
+    .paczkomat-search {
+      display: flex; gap: 0.5rem; margin-bottom: 0.8rem;
+    }
+    .paczkomat-search input {
+      flex: 1; padding: 0.6rem 1rem;
+      border: 2px solid var(--border); border-radius: 12px;
+      font-size: 0.88rem; font-family: var(--font-body);
+      outline: none; transition: border-color 0.2s;
+    }
     .paczkomat-search input:focus { border-color: var(--brown); }
-    .paczkomat-search button { background: var(--brown); color: #fff; padding: 0.6rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
-    .paczkomat-search button:hover { background: var(--blush-dark); }
+    .paczkomat-search button {
+      background: var(--brown); color: #fff;
+      padding: 0.6rem 1.1rem; border-radius: 12px;
+      font-size: 0.85rem; font-weight: 700;
+      transition: all 0.2s;
+    }
+    .paczkomat-search button:hover { background: var(--blush-dark); transform: scale(1.02); }
 
     #paczkomat-map {
-      width: 100%; height: 380px; border-radius: var(--radius-sm);
-      border: 1.5px solid var(--border); overflow: hidden;
-      z-index: 1;
+      width: 100%; height: 360px;
+      border-radius: 14px;
+      border: 2px solid var(--border);
+      overflow: hidden;
     }
-    .leaflet-popup-content-wrapper { border-radius: 12px !important; font-family: var(--font-body); }
-    .leaflet-popup-content { margin: 12px 16px !important; }
-    .popup-title { font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 4px; }
-    .popup-addr { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; line-height: 1.4; }
-    .popup-open { font-size: 0.75rem; color: #4A7A4A; font-weight: 600; margin-bottom: 8px; }
-    .popup-btn { background: #8B5E3C; color: #fff; border: none; padding: 6px 14px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; cursor: pointer; width: 100%; }
-    .popup-btn:hover { background: #E8899F; }
+    .map-wrap { position: relative; }
+    #map-loading {
+      display: none;
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 0.6rem;
+      border-radius: 14px;
+    }
+    .spin-ring {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--brown);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
 
-    .selected-paczkomat {
-      display: flex; align-items: center; gap: 0.7rem;
-      background: #F0FFF0; border: 1.5px solid #B8E0BA;
-      border-radius: var(--radius-sm); padding: 0.7rem 1rem;
-      margin-top: 0.7rem; font-size: 0.85rem;
+    .selected-paczkomat-box {
+      display: flex; align-items: center; gap: 0.8rem;
+      background: #edfaee;
+      border: 2px solid #b8e8bc;
+      border-radius: 14px;
+      padding: 0.9rem 1.1rem;
+      margin-top: 0.7rem;
+      animation: fadeUp 0.3s ease;
     }
-    .selected-paczkomat strong { color: #2E6B30; }
-    .selected-paczkomat .change-btn { margin-left: auto; font-size: 0.78rem; color: var(--text-muted); text-decoration: underline; cursor: pointer; background: none; border: none; }
+    .selected-paczkomat-box strong { color: #2e6b30; }
+    .selected-paczkomat-box .change-btn {
+      margin-left: auto; font-size: 0.8rem;
+      color: var(--text-muted); text-decoration: underline;
+      background: none; border: none; cursor: pointer;
+    }
+
+    /* PRZYCISK DALEJ */
+    .next-btn {
+      width: 100%; padding: 1rem;
+      background: linear-gradient(135deg, var(--brown) 0%, #a0724a 100%);
+      color: #fff;
+      border: none; border-radius: 14px;
+      font-size: 1.05rem; font-weight: 700;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: all 0.25s;
+      box-shadow: 0 4px 20px rgba(139,94,60,0.3);
+      letter-spacing: 0.3px;
+    }
+    .next-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(139,94,60,0.4); }
+    .next-btn:active { transform: translateY(0); }
 
     /* PODSUMOWANIE */
-    .order-summary { background: var(--warm-white); border-radius: var(--radius); padding: 1.5rem; box-shadow: 0 2px 10px var(--shadow); position: sticky; top: 90px; }
-    .order-summary h2 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 1.2rem; }
-    .order-item { display: flex; gap: 0.8rem; align-items: center; margin-bottom: 0.8rem; }
-    .order-item-img { width: 50px; height: 50px; border-radius: 8px; overflow: hidden; background: var(--cream); flex-shrink: 0; }
+    .co-summary {
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(237,229,218,0.8);
+      border-radius: 20px;
+      padding: 1.6rem;
+      box-shadow: 0 4px 24px rgba(139,94,60,0.07);
+      position: sticky;
+      top: 90px;
+      animation: fadeUp 0.4s ease 0.1s both;
+    }
+    .co-summary h2 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 1.2rem; }
+
+    .order-item {
+      display: flex; gap: 0.8rem; align-items: center;
+      margin-bottom: 0.8rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .order-item:last-of-type { border-bottom: none; }
+    .order-item-img {
+      width: 52px; height: 52px;
+      border-radius: 10px; overflow: hidden;
+      background: var(--cream); flex-shrink: 0;
+    }
     .order-item-img img { width: 100%; height: 100%; object-fit: cover; }
-    .order-item-name { font-size: 0.85rem; font-weight: 600; }
-    .order-item-variant { font-size: 0.78rem; color: var(--text-muted); }
-    .order-item-price { margin-left: auto; font-size: 0.9rem; font-weight: 700; color: var(--brown); white-space: nowrap; }
-    .order-divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
-    .order-row { display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.5rem; }
-    .order-row.total { font-size: 1.05rem; font-weight: 700; color: var(--text); padding-top: 0.5rem; border-top: 1.5px solid var(--border); margin-top: 0.5rem; }
-    .order-row.total span:last-child { color: var(--brown); }
+    .order-item-name  { font-size: 0.85rem; font-weight: 600; }
+    .order-item-var   { font-size: 0.75rem; color: var(--text-muted); }
+    .order-item-price { margin-left: auto; font-weight: 700; color: var(--brown); white-space: nowrap; }
 
-    .place-order-btn { display: block; width: 100%; background: var(--brown); color: #fff; padding: 1rem; border-radius: 50px; font-size: 1rem; font-weight: 700; text-align: center; margin-top: 1.2rem; transition: background 0.2s; border: none; cursor: pointer; }
-    .place-order-btn:hover { background: var(--blush-dark); }
-    .secure-badge { text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.6rem; }
+    .summary-row {
+      display: flex; justify-content: space-between;
+      font-size: 0.88rem; color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .summary-row.total {
+      font-size: 1.1rem; font-weight: 700;
+      color: var(--text);
+      border-top: 2px solid var(--border);
+      padding-top: 0.8rem; margin-top: 0.5rem;
+    }
+    .summary-row.total span:last-child { color: var(--brown); }
+    .secure-note { text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.8rem; }
 
-    /* HIDDEN */
+    /* UKRYTE */
     .hidden { display: none !important; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* POPUP LEAFLET */
+    .leaflet-popup-content-wrapper { border-radius: 14px !important; font-family: var(--font-body) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important; }
+    .leaflet-popup-content { margin: 14px 16px !important; }
+    .popup-id   { font-weight: 800; font-size: 0.88rem; color: var(--text); margin-bottom: 3px; }
+    .popup-addr { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; line-height: 1.5; }
+    .popup-hrs  { font-size: 0.72rem; color: #3a8a4a; font-weight: 700; margin-bottom: 8px; }
+    .popup-btn  {
+      width: 100%; padding: 7px 0;
+      background: var(--brown); color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 0.82rem; font-weight: 700; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .popup-btn:hover { background: var(--blush-dark); }
 
     @media (max-width: 768px) {
-      .checkout-page { padding: 0 1rem 3rem; }
-      .checkout-layout { grid-template-columns: 1fr; }
-      .order-summary { position: static; }
-      .form-row { grid-template-columns: 1fr; }
+      .co-layout { grid-template-columns: 1fr; }
+      .co-summary { position: static; }
+      .form-row   { grid-template-columns: 1fr; }
+      .co-page    { padding: 1rem 1rem 4rem; }
     }
   </style>
 </head>
 <body data-page="checkout">
 <div id="nav-placeholder"></div>
 
-<main class="checkout-page">
+<main class="co-page">
   <h1>📦 Zamówienie</h1>
 
   <!-- KROKI -->
   <div class="steps">
-    <div class="step active" id="step1"><span class="step-num">1</span> Dane</div>
-    <div class="step-line"></div>
-    <div class="step" id="step2"><span class="step-num">2</span> Dostawa</div>
-    <div class="step-line"></div>
-    <div class="step" id="step3"><span class="step-num">3</span> Płatność</div>
+    <div class="step active" id="step-1"><span class="step-num">1</span> Dane</div>
+    <div class="step-line"><div class="step-line-fill" id="line-1"></div></div>
+    <div class="step" id="step-2"><span class="step-num">2</span> Dostawa</div>
+    <div class="step-line"><div class="step-line-fill" id="line-2"></div></div>
+    <div class="step" id="step-3"><span class="step-num">3</span> Płatność</div>
   </div>
 
-  <div class="checkout-layout">
-    <div class="checkout-form">
+  <div class="co-layout">
+    <!-- LEWA KOLUMNA -->
+    <div id="co-left">
 
       <!-- KROK 1: DANE -->
       <div id="section-data">
-        <div class="form-section">
+        <div class="co-panel">
           <h2>👤 Dane osobowe</h2>
           <div class="form-row">
-            <div class="form-group"><label>Imię</label><input type="text" id="fname" placeholder="Jan"/></div>
-            <div class="form-group"><label>Nazwisko</label><input type="text" id="lname" placeholder="Kowalski"/></div>
+            <div class="form-group"><label>Imię *</label><input type="text" id="fname" placeholder="Jan" autocomplete="given-name"/></div>
+            <div class="form-group"><label>Nazwisko *</label><input type="text" id="lname" placeholder="Kowalski" autocomplete="family-name"/></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>E-mail</label><input type="email" id="email" placeholder="jan@email.com"/></div>
-            <div class="form-group"><label>Telefon</label><input type="tel" id="phone" placeholder="+48 000 000 000"/></div>
+            <div class="form-group"><label>E-mail *</label><input type="email" id="email" placeholder="jan@email.com" autocomplete="email"/></div>
+            <div class="form-group"><label>Telefon</label><input type="tel" id="phone" placeholder="+48 600 000 000" autocomplete="tel"/></div>
           </div>
         </div>
 
-        <div class="form-section">
+        <div class="co-panel">
           <h2>🌍 Kraj wysyłki</h2>
           <div class="form-row full">
             <div class="form-group">
-              <label>Wybierz kraj</label>
+              <label>Wybierz kraj *</label>
               <select id="country" onchange="onCountryChange()">
                 <option value="">— Wybierz kraj —</option>
                 <option value="PL">🇵🇱 Polska</option>
@@ -185,43 +427,50 @@
                 <option value="UA">🇺🇦 Ukraina</option>
                 <option value="OTHER">🌍 Inne</option>
               </select>
-              <span class="country-note" id="country-note"></span>
+              <div id="country-badge"></div>
             </div>
           </div>
-          <!-- Adres (dla Polski) -->
-          <div id="address-pl" class="hidden">
-            <div class="form-row">
-              <div class="form-group" style="grid-column:1/-1"><label>Ulica i numer</label><input type="text" id="street" placeholder="ul. Kwiatowa 5/3"/></div>
-            </div>
-            <div class="form-row">
-              <div class="form-group"><label>Kod pocztowy</label><input type="text" id="zip" placeholder="00-000"/></div>
-              <div class="form-group"><label>Miasto</label><input type="text" id="city" placeholder="Warszawa"/></div>
-            </div>
-          </div>
-          <!-- Adres (zagranica) -->
-          <div id="address-intl" class="hidden">
+
+          <!-- Adres PL -->
+          <div id="addr-pl" class="hidden" style="margin-top:1rem;">
             <div class="form-row full">
-              <div class="form-group"><label>Pełny adres</label><input type="text" id="address-full" placeholder="Street, City, ZIP, Country"/></div>
+              <div class="form-group"><label>Ulica i numer *</label><input type="text" id="street" placeholder="ul. Kwiatowa 5/3" autocomplete="street-address"/></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Kod pocztowy *</label><input type="text" id="zip" placeholder="00-000" maxlength="6"/></div>
+              <div class="form-group"><label>Miasto *</label><input type="text" id="city" placeholder="Warszawa" autocomplete="address-level2"/></div>
+            </div>
+          </div>
+
+          <!-- Adres zagranica -->
+          <div id="addr-intl" class="hidden" style="margin-top:1rem;">
+            <div class="form-row full">
+              <div class="form-group"><label>Pełny adres *</label><input type="text" id="addr-full" placeholder="Street, City, ZIP, Country" autocomplete="street-address"/></div>
             </div>
           </div>
         </div>
 
-        <!-- Metoda dostawy (tylko Polska) -->
-        <div class="form-section" id="shipping-section" style="display:none;">
+        <button class="next-btn" onclick="goToShipping()">Dalej — Wybierz dostawę →</button>
+      </div>
+
+      <!-- KROK 2: DOSTAWA (ukryty na start) -->
+      <div id="section-shipping" class="hidden">
+        <div class="co-panel">
           <h2>🚚 Metoda dostawy</h2>
-          <div class="shipping-methods" id="shipping-methods"></div>
+          <div class="shipping-methods" id="shipping-methods-list"></div>
+
           <!-- MAPA PACZKOMATÓW -->
-          <div class="paczkomat-section hidden" id="paczkomat-section">
-            <div id="selected-paczkomat-display" class="hidden"></div>
+          <div id="paczkomat-section" class="paczkomat-section hidden">
+            <div id="selected-paczkomat-display"></div>
             <div id="paczkomat-map-wrapper">
-              <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.6rem;">Wpisz miasto lub kod pocztowy, aby znaleźć paczkomat:</p>
+              <p style="font-size:0.82rem;color:var(--text-muted);margin:0.8rem 0 0.5rem;">Wpisz miasto lub kod pocztowy i kliknij pinezkę:</p>
               <div class="paczkomat-search">
                 <input type="text" id="paczkomat-search" placeholder="np. Warszawa, Kraków, 30-001..."/>
-                <button onclick="searchPaczkomat()">Szukaj</button>
+                <button onclick="searchPaczkomat()">🔍 Szukaj</button>
               </div>
-              <div style="position:relative;">
-                <div id="map-loading" style="display:none;position:absolute;inset:0;background:rgba(255,255,255,0.8);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:0.5rem;border-radius:var(--radius-sm);">
-                  <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--brown);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+              <div class="map-wrap">
+                <div id="map-loading">
+                  <div class="spin-ring"></div>
                   <span style="font-size:0.82rem;color:var(--text-muted);">Ładowanie paczkomatów...</span>
                 </div>
                 <div id="paczkomat-map"></div>
@@ -230,350 +479,356 @@
           </div>
         </div>
 
-        <button class="btn-primary" style="margin-top:1rem;width:100%;justify-content:center;padding:0.9rem;" onclick="nextStep()">
-          Dalej →
+        <button class="next-btn" onclick="goToPayment()">Dalej — Przejdź do płatności →</button>
+      </div>
+
+      <!-- KROK 3: PŁATNOŚĆ (ukryty na start) -->
+      <div id="section-payment" class="hidden">
+        <div class="co-panel">
+          <h2>💳 Metoda płatności</h2>
+          <div class="shipping-methods">
+            <label class="shipping-method selected" onclick="selectPayment(this)">
+              <input type="radio" name="payment" value="blik" checked/>
+              <div class="radio-circle"><div class="radio-dot"></div></div>
+              <span class="shipping-logo">📱</span>
+              <div class="shipping-info">
+                <div class="shipping-name">BLIK</div>
+                <div class="shipping-desc">Płatność jednorazowym kodem BLIK</div>
+              </div>
+            </label>
+            <label class="shipping-method" onclick="selectPayment(this)">
+              <input type="radio" name="payment" value="card"/>
+              <div class="radio-circle"><div class="radio-dot"></div></div>
+              <span class="shipping-logo">💳</span>
+              <div class="shipping-info">
+                <div class="shipping-name">Karta płatnicza</div>
+                <div class="shipping-desc">Visa, Mastercard — obsługa przez Stripe</div>
+              </div>
+            </label>
+            <label class="shipping-method" onclick="selectPayment(this)">
+              <input type="radio" name="payment" value="transfer"/>
+              <div class="radio-circle"><div class="radio-dot"></div></div>
+              <span class="shipping-logo">🏦</span>
+              <div class="shipping-info">
+                <div class="shipping-name">Przelew bankowy</div>
+                <div class="shipping-desc">Dane do przelewu otrzymasz w e-mailu</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <button class="next-btn" onclick="placeOrder()" style="background:linear-gradient(135deg,#3a8a4a,#5aaa6a);box-shadow:0 4px 20px rgba(58,138,74,0.35);">
+          ✅ Złóż zamówienie
         </button>
       </div>
 
     </div>
 
-    <!-- PODSUMOWANIE ZAMÓWIENIA -->
-    <div class="order-summary" id="order-summary">
+    <!-- PODSUMOWANIE -->
+    <div class="co-summary">
       <h2>Twoje zamówienie</h2>
-      <div id="order-items"></div>
-      <hr class="order-divider"/>
-      <div class="order-row"><span>Produkty</span><span id="sum-products">—</span></div>
-      <div class="order-row"><span>Dostawa</span><span id="sum-shipping">—</span></div>
-      <div class="order-row total"><span>Razem</span><span id="sum-total">—</span></div>
-      <div class="secure-badge">🔒 Bezpieczna płatność · SSL</div>
+      <div id="order-items-list"></div>
+      <div class="summary-row"><span>Produkty</span><span id="sum-products">—</span></div>
+      <div class="summary-row"><span>Dostawa</span><span id="sum-shipping">—</span></div>
+      <div class="summary-row total"><span>Razem</span><span id="sum-total">—</span></div>
+      <div class="secure-note">🔒 Bezpieczna płatność · Szyfrowanie SSL</div>
     </div>
   </div>
 </main>
 
-<footer class="footer-full">
-  <div class="footer-bottom" style="max-width:1000px;margin:0 auto;padding:1.2rem 2rem;">
-    <span>&copy; 2025 <strong>TinyHugs</strong></span>
-    <div class="footer-payments">
-      <span class="pay-badge">VISA</span>
-      <span class="pay-badge">Mastercard</span>
-      <span class="pay-badge">BLIK</span>
-      <span class="pay-badge">Przelew</span>
-    </div>
-  </div>
-</footer>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="products.js"></script>
 <script src="i18n.js"></script>
-<script src="cart.js"></script>
 <script src="nav.js"></script>
+<script src="products.js"></script>
+<script src="cart.js"></script>
 <script>
 renderNav("");
 
-// === PODSUMOWANIE ===
-function renderSummary() {
-  const cart = getCart();
-  const itemsEl = document.getElementById("order-items");
-  const total = getCartTotal();
-  const country = document.getElementById("country")?.value || "";
-  const selectedShipping = document.querySelector(".shipping-method.selected");
-  const shippingCost = selectedShipping ? parseFloat(selectedShipping.dataset.cost) : (country === "PL" ? 0 : getIntlShipping(country));
-  const freeShipping = country === "PL" && total >= 119;
-  const actualShipping = freeShipping ? 0 : shippingCost;
+// ===== STAN =====
+let currentStep = 1;
+let selectedShippingId = null;
+let selectedShippingCost = 0;
+let selectedPaczkomat = null;
+let leafletMap = null;
+let markersLayer = null;
 
-  itemsEl.innerHTML = cart.map(item => {
-    const p = getProductById(item.id);
-    if (!p) return "";
-    return `<div class="order-item">
-      <div class="order-item-img"><img src="${p.image}" onerror="this.src='img/placeholder.jpg'"/></div>
-      <div><div class="order-item-name">${p.name} ${p.variant}</div><div class="order-item-variant">x${item.quantity}</div></div>
-      <div class="order-item-price">${formatPrice(p.price * item.quantity)}</div>
-    </div>`;
-  }).join("");
-
-  document.getElementById("sum-products").textContent = formatPrice(total);
-  document.getElementById("sum-shipping").textContent = actualShipping === 0 ? "Darmowa 🎉" : formatPrice(actualShipping);
-  document.getElementById("sum-total").textContent = formatPrice(total + actualShipping);
+// ===== KROKI =====
+function setStep(n) {
+  currentStep = n;
+  [1,2,3].forEach(i => {
+    const s = document.getElementById("step-" + i);
+    s.classList.remove("active","done");
+    if (i < n)  s.classList.add("done");
+    if (i === n) s.classList.add("active");
+    // Wypełnij linie
+    const line = document.getElementById("line-" + i);
+    if (line) line.style.width = i < n ? "100%" : "0";
+  });
 }
 
-function getIntlShipping(country) {
-  const eu = ["DE","FR","GB","CZ","SK","AT","NL","BE","IT","ES","SE","NO","DK","FI","HU","RO"];
-  if (eu.includes(country)) return 35;
-  return 55;
-}
-
-// === ZMIANA KRAJU ===
+// ===== ZMIANA KRAJU =====
 function onCountryChange() {
   const country = document.getElementById("country").value;
-  const note = document.getElementById("country-note");
-  const shippingSection = document.getElementById("shipping-section");
-  const addrPl = document.getElementById("address-pl");
-  const addrIntl = document.getElementById("address-intl");
+  const badge   = document.getElementById("country-badge");
+  const addrPl  = document.getElementById("addr-pl");
+  const addrIn  = document.getElementById("addr-intl");
 
   addrPl.classList.add("hidden");
-  addrIntl.classList.add("hidden");
+  addrIn.classList.add("hidden");
+  badge.innerHTML = "";
 
-  if (!country) { shippingSection.style.display = "none"; note.textContent = ""; renderSummary(); return; }
+  if (!country) return;
 
   if (country === "PL") {
     addrPl.classList.remove("hidden");
-    note.innerHTML = `<span class="free-ship-note">✅ Darmowa dostawa od 119 zł!</span>`;
-    shippingSection.style.display = "block";
-    renderShippingPL();
+    badge.innerHTML = `<span class="free-badge">✅ Darmowa dostawa od 119 zł!</span>`;
   } else {
-    addrIntl.classList.remove("hidden");
-    const cost = getIntlShipping(country);
-    note.textContent = `Dostawa zagraniczna: ${formatPrice(cost)}`;
-    shippingSection.style.display = "none";
+    addrIn.classList.remove("hidden");
+    const cost = getIntlCost(country);
+    badge.innerHTML = `<span class="intl-badge">🌍 Dostawa zagraniczna: ${formatPrice(cost)}</span>`;
   }
   renderSummary();
 }
 
-// === METODY DOSTAWY PL ===
-const shippingOptions = [
-  { id: "inpost-paczkomat", logo: "📦", name: "InPost Paczkomat", desc: "Odbiór w paczkomacie · 1-2 dni robocze", cost: 12.99, hasPaczkomat: true },
-  { id: "inpost-kurier",    logo: "🟡", name: "InPost Kurier",    desc: "Dostawa pod drzwi · 1-2 dni robocze",  cost: 14.99 },
-  { id: "dpd",              logo: "🔴", name: "DPD Kurier",       desc: "Dostawa pod drzwi · 1-3 dni robocze",  cost: 15.99 },
-  { id: "dhl",              logo: "🟡", name: "DHL Kurier",       desc: "Dostawa pod drzwi · 1-2 dni robocze",  cost: 16.99 },
+function getIntlCost(c) {
+  const eu = ["DE","FR","GB","CZ","SK","AT","NL","BE","IT","ES","SE","NO","DK","FI","HU","RO"];
+  return eu.includes(c) ? 35 : 55;
+}
+
+// ===== PRZEJŚCIE DO DOSTAWY =====
+function goToShipping() {
+  const fname   = document.getElementById("fname").value.trim();
+  const email   = document.getElementById("email").value.trim();
+  const country = document.getElementById("country").value;
+
+  if (!fname)   { shake("fname");  return; }
+  if (!email)   { shake("email");  return; }
+  if (!country) { shake("country"); return; }
+
+  document.getElementById("section-data").classList.add("hidden");
+
+  if (country === "PL") {
+    document.getElementById("section-shipping").classList.remove("hidden");
+    renderShippingPL();
+  } else {
+    // Zagranica - od razu do płatności
+    selectedShippingCost = getIntlCost(country);
+    document.getElementById("section-payment").classList.remove("hidden");
+    setStep(3);
+  }
+
+  setStep(country === "PL" ? 2 : 3);
+  renderSummary();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function shake(id) {
+  const el = document.getElementById(id);
+  el.style.animation = "none";
+  el.offsetHeight;
+  el.style.animation = "shake 0.4s ease";
+  el.style.borderColor = "#e05555";
+  setTimeout(() => { el.style.borderColor = ""; el.style.animation = ""; }, 1500);
+}
+
+// ===== DOSTAWA PL =====
+const SHIPPING_OPTIONS = [
+  { id: "inpost-paczkomat", logo: "📦", name: "InPost Paczkomat", desc: "Odbiór 24/7 · 1-2 dni robocze", cost: 12.99, paczkomat: true },
+  { id: "inpost-kurier",    logo: "🟡", name: "InPost Kurier",    desc: "Pod drzwi · 1-2 dni robocze",  cost: 14.99 },
+  { id: "dpd",              logo: "🔴", name: "DPD Kurier",       desc: "Pod drzwi · 1-3 dni robocze",  cost: 15.99 },
+  { id: "dhl",              logo: "🟠", name: "DHL Kurier",       desc: "Pod drzwi · 1-2 dni robocze",  cost: 16.99 },
 ];
 
 function renderShippingPL() {
-  const container = document.getElementById("shipping-methods");
   const total = getCartTotal();
-  container.innerHTML = shippingOptions.map(opt => {
-    const free = total >= 119;
-    const priceLabel = free ? '<span style="color:#4A7A4A;font-weight:700;">Darmowa 🎉</span>' : `${opt.cost.toFixed(2)} zł`;
-    return `<label class="shipping-method" data-id="${opt.id}" data-cost="${opt.cost}" onclick="selectShipping(this, ${opt.hasPaczkomat||false})">
-      <input type="radio" name="shipping" value="${opt.id}"/>
-      <span class="shipping-logo">${opt.logo}</span>
+  const free  = total >= 119;
+  const list  = document.getElementById("shipping-methods-list");
+
+  list.innerHTML = SHIPPING_OPTIONS.map((o,i) => `
+    <label class="shipping-method" data-id="${o.id}" data-cost="${o.cost}"
+           style="animation:fadeUp 0.3s ease ${i*0.07}s both"
+           onclick="selectShipping(this, ${!!o.paczkomat})">
+      <input type="radio" name="shipping" value="${o.id}"/>
+      <div class="radio-circle"><div class="radio-dot"></div></div>
+      <span class="shipping-logo">${o.logo}</span>
       <div class="shipping-info">
-        <div class="shipping-name">${opt.name}</div>
-        <div class="shipping-desc">${opt.desc}</div>
+        <div class="shipping-name">${o.name}</div>
+        <div class="shipping-desc">${o.desc}</div>
       </div>
-      <span class="shipping-price">${priceLabel}</span>
-    </label>`;
-  }).join("");
+      <span class="${free ? 'shipping-free' : 'shipping-price'}">${free ? 'Darmowa 🎉' : o.cost.toFixed(2) + ' zł'}</span>
+    </label>`).join("");
 }
 
 function selectShipping(el, hasPaczkomat) {
   document.querySelectorAll(".shipping-method").forEach(m => m.classList.remove("selected"));
   el.classList.add("selected");
-  el.querySelector("input").checked = true;
-  const paczkomatSection = document.getElementById("paczkomat-section");
+  selectedShippingId   = el.dataset.id;
+  selectedShippingCost = getCartTotal() >= 119 ? 0 : parseFloat(el.dataset.cost);
+
+  const ps = document.getElementById("paczkomat-section");
   if (hasPaczkomat) {
-    paczkomatSection.classList.remove("hidden");
+    ps.classList.remove("hidden");
     initMap();
-    setTimeout(() => leafletMap && leafletMap.invalidateSize(), 200);
   } else {
-    paczkomatSection.classList.add("hidden");
+    ps.classList.add("hidden");
+    selectedPaczkomat = null;
   }
   renderSummary();
 }
 
-// === MAPA PACZKOMATÓW (Leaflet + OpenStreetMap + InPost API) ===
-let selectedPaczkomat = null;
-let leafletMap = null;
-let allMarkers = L.layerGroup ? null : null;
-let markersLayer = null;
+function goToPayment() {
+  if (!selectedShippingId) { alert("Wybierz metodę dostawy."); return; }
+  if (selectedShippingId === "inpost-paczkomat" && !selectedPaczkomat) {
+    alert("Wybierz paczkomat z mapy."); return;
+  }
+  document.getElementById("section-shipping").classList.add("hidden");
+  document.getElementById("section-payment").classList.remove("hidden");
+  setStep(3);
+  renderSummary();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
+function selectPayment(el) {
+  document.querySelectorAll(".shipping-method").forEach(m => m.classList.remove("selected"));
+  el.classList.add("selected");
+}
+
+function placeOrder() {
+  alert("✅ Zamówienie złożone! Zaraz zintegrujemy płatność Stripe.");
+}
+
+// ===== MAPA =====
 async function initMap() {
-  if (leafletMap) { leafletMap.invalidateSize(); return; }
+  if (leafletMap) { setTimeout(() => leafletMap.invalidateSize(), 150); return; }
 
   leafletMap = L.map("paczkomat-map").setView([52.0, 19.5], 6);
-
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
-    maxZoom: 18
+    maxZoom: 19
   }).addTo(leafletMap);
 
   markersLayer = L.layerGroup().addTo(leafletMap);
-
-  // Pokaż spinner
   document.getElementById("map-loading").style.display = "flex";
 
+  const pinkIcon = L.divIcon({
+    className: "",
+    html: `<div style="background:#E8899F;width:13px;height:13px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.35);transition:transform 0.15s;"></div>`,
+    iconSize: [13,13], iconAnchor: [6,6], popupAnchor: [0,-8]
+  });
+
   try {
-    // InPost publiczne API - wszystkie paczkomaty w Polsce
-    const res = await fetch("https://api.inpost.pl/v1/points?type=parcel_locker&fields=name,address,location&per_page=10000&page=1", {
-      headers: { "Accept": "application/json" }
-    });
-    const data = await res.json();
-    renderInpostMarkers(data.items || []);
-  } catch(e) {
-    // Fallback - jeśli API niedostępne z powodu CORS, użyj proxy
-    try {
-      const res2 = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://api.inpost.pl/v1/points?type=parcel_locker&fields=name,address,location&per_page=5000"));
-      const data2 = await res2.json();
-      renderInpostMarkers(data2.items || []);
-    } catch(e2) {
-      // Ostateczny fallback - duża lista przykładowych paczkomatów
-      renderInpostMarkers(FALLBACK_PACZKOMATY);
-    }
+    const r = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://api.inpost.pl/v1/points?type=parcel_locker&fields=name,address,location&per_page=15000&page=1"));
+    const d = await r.json();
+    loadMarkers(d.items || [], pinkIcon);
+  } catch {
+    loadMarkers(FALLBACK, pinkIcon);
   }
 
   document.getElementById("map-loading").style.display = "none";
 }
 
-function renderInpostMarkers(items) {
+function loadMarkers(items, icon) {
   markersLayer.clearLayers();
-
-  const pinkIcon = L.divIcon({
-    className: "",
-    html: `<div style="background:#E8899F;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
-    popupAnchor: [0, -10]
-  });
-
-  const selectedIcon = L.divIcon({
-    className: "",
-    html: `<div style="background:#8B5E3C;width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5);"></div>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
-    popupAnchor: [0, -12]
-  });
-
   items.forEach(p => {
-    const lat = p.location?.latitude || p.latitude;
-    const lng = p.location?.longitude || p.longitude;
+    const lat  = p.location?.latitude  ?? p.latitude;
+    const lng  = p.location?.longitude ?? p.longitude;
     const name = p.name;
-    const street = p.address?.line1 || p.address_details?.street + " " + p.address_details?.building_number || "";
-    const city = p.address?.line2 || p.address_details?.city || "";
+    const str  = p.address?.line1 ?? "";
+    const city = p.address?.line2 ?? "";
     if (!lat || !lng) return;
-
-    const icon = selectedPaczkomat?.id === name ? selectedIcon : pinkIcon;
-    const marker = L.marker([lat, lng], { icon });
-    marker.bindPopup(`
-      <div class="popup-title">📦 ${name}</div>
-      <div class="popup-addr">${street}<br/>${city}</div>
-      <div class="popup-open">✅ Czynny 24/7</div>
-      <button class="popup-btn" onclick="selectPaczkomat('${name}','${street}','${city}')">Wybierz</button>
-    `, { maxWidth: 220 });
-    markersLayer.addLayer(marker);
+    const m = L.marker([lat,lng], {icon});
+    m.bindPopup(`
+      <div class="popup-id">📦 ${name}</div>
+      <div class="popup-addr">${str}<br/>${city}</div>
+      <div class="popup-hrs">✅ Czynny 24/7</div>
+      <button class="popup-btn" onclick="selectPaczkomat('${name}','${str.replace(/'/g,"\\'")}','${city.replace(/'/g,"\\'")}')">Wybierz ten paczkomat</button>
+    `, {maxWidth:220});
+    markersLayer.addLayer(m);
   });
 }
 
-// Fallback - ręczna lista na wypadek braku API
-const FALLBACK_PACZKOMATY = [
-  { name: "WAW001A", latitude: 52.2297, longitude: 21.0122, address: { line1: "ul. Marszałkowska 10", line2: "Warszawa" } },
-  { name: "WAW002A", latitude: 52.1959, longitude: 21.0150, address: { line1: "ul. Puławska 45", line2: "Warszawa" } },
-  { name: "WAW003A", latitude: 52.2255, longitude: 21.0049, address: { line1: "al. Jerozolimskie 100", line2: "Warszawa" } },
-  { name: "WAW004A", latitude: 52.2340, longitude: 20.9840, address: { line1: "ul. Prosta 70", line2: "Warszawa" } },
-  { name: "WAW005A", latitude: 52.2520, longitude: 21.0440, address: { line1: "ul. Targowa 60", line2: "Warszawa" } },
-  { name: "WAW006A", latitude: 52.2180, longitude: 21.0580, address: { line1: "ul. Grochowska 200", line2: "Warszawa" } },
-  { name: "WAW007A", latitude: 52.1843, longitude: 20.9994, address: { line1: "ul. Wołoska 12", line2: "Warszawa" } },
-  { name: "KRK001A", latitude: 50.0647, longitude: 19.9450, address: { line1: "ul. Floriańska 8", line2: "Kraków" } },
-  { name: "KRK002A", latitude: 50.0573, longitude: 19.9437, address: { line1: "ul. Kazimierza W. 20", line2: "Kraków" } },
-  { name: "KRK003A", latitude: 50.0680, longitude: 19.9360, address: { line1: "ul. Długa 1", line2: "Kraków" } },
-  { name: "KRK004A", latitude: 50.0490, longitude: 19.9670, address: { line1: "ul. Wielicka 50", line2: "Kraków" } },
-  { name: "GDA001A", latitude: 54.3520, longitude: 18.6466, address: { line1: "ul. Długa 12", line2: "Gdańsk" } },
-  { name: "GDA002A", latitude: 54.3735, longitude: 18.6180, address: { line1: "ul. Grunwaldzka 56", line2: "Gdańsk" } },
-  { name: "GDA003A", latitude: 54.3693, longitude: 18.6205, address: { line1: "ul. Wita Stwosza 30", line2: "Gdańsk" } },
-  { name: "WRO001A", latitude: 51.1079, longitude: 17.0385, address: { line1: "ul. Świdnicka 30", line2: "Wrocław" } },
-  { name: "WRO002A", latitude: 51.1100, longitude: 17.0345, address: { line1: "ul. Oławska 10", line2: "Wrocław" } },
-  { name: "WRO003A", latitude: 51.0940, longitude: 17.0280, address: { line1: "ul. Ślężna 30", line2: "Wrocław" } },
-  { name: "POZ001A", latitude: 52.4064, longitude: 16.9252, address: { line1: "ul. Półwiejska 40", line2: "Poznań" } },
-  { name: "POZ002A", latitude: 52.4082, longitude: 16.9336, address: { line1: "ul. Roosevelta 6", line2: "Poznań" } },
-  { name: "LDZ001A", latitude: 51.7592, longitude: 19.4560, address: { line1: "ul. Piotrkowska 100", line2: "Łódź" } },
-  { name: "LDZ002A", latitude: 51.7720, longitude: 19.4660, address: { line1: "ul. Kilińskiego 50", line2: "Łódź" } },
-  { name: "KAT001A", latitude: 50.2649, longitude: 19.0238, address: { line1: "ul. 3 Maja 7", line2: "Katowice" } },
-  { name: "SZC001A", latitude: 53.4285, longitude: 14.5528, address: { line1: "ul. Wojska Polskiego 5", line2: "Szczecin" } },
-  { name: "BIA001A", latitude: 53.1325, longitude: 23.1688, address: { line1: "ul. Lipowa 20", line2: "Białystok" } },
-  { name: "LUB001A", latitude: 51.2465, longitude: 22.5684, address: { line1: "ul. Krakowskie Przeds. 3", line2: "Lublin" } },
-  { name: "RZE001A", latitude: 50.0412, longitude: 21.9991, address: { line1: "ul. 3 Maja 12", line2: "Rzeszów" } },
-  { name: "OLS001A", latitude: 53.7784, longitude: 20.4801, address: { line1: "ul. Staromiejska 1", line2: "Olsztyn" } },
-  { name: "SLU001A", latitude: 54.4641, longitude: 17.0286, address: { line1: "ul. Wojska Polskiego 4", line2: "Słupsk" } },
-  { name: "UST001A", latitude: 54.5804, longitude: 16.8619, address: { line1: "ul. Marynarki Polskiej 5", line2: "Ustka" } },
-  { name: "GDY001A", latitude: 54.5189, longitude: 18.5305, address: { line1: "ul. Świętojańska 30", line2: "Gdynia" } },
-  { name: "TOR001A", latitude: 53.0138, longitude: 18.5984, address: { line1: "ul. Szeroka 15", line2: "Toruń" } },
-  { name: "BYD001A", latitude: 53.1235, longitude: 18.0084, address: { line1: "ul. Dworcowa 50", line2: "Bydgoszcz" } },
-  { name: "KIE001A", latitude: 50.8661, longitude: 20.6286, address: { line1: "ul. Sienkiewicza 25", line2: "Kielce" } },
-  { name: "ZIE001A", latitude: 51.9356, longitude: 15.5062, address: { line1: "ul. Kupiecka 10", line2: "Zielona Góra" } },
-  { name: "OPO001A", latitude: 50.6751, longitude: 17.9213, address: { line1: "ul. Krakowska 40", line2: "Opole" } },
-  { name: "GOR001A", latitude: 53.7352, longitude: 15.2432, address: { line1: "ul. Sikorskiego 20", line2: "Koszalin" } },
-  { name: "ELB001A", latitude: 54.1522, longitude: 19.4025, address: { line1: "ul. Traugutta 5", line2: "Elbląg" } },
-  { name: "PLO001A", latitude: 52.5463, longitude: 19.7028, address: { line1: "ul. Tumska 10", line2: "Płock" } },
-  { name: "RAD001A", latitude: 51.4027, longitude: 21.1471, address: { line1: "ul. Żeromskiego 5", line2: "Radom" } },
-  { name: "CZE001A", latitude: 50.8118, longitude: 19.1203, address: { line1: "ul. NMP 10", line2: "Częstochowa" } },
-  { name: "SOS001A", latitude: 50.2863, longitude: 19.1041, address: { line1: "ul. 3 Maja 30", line2: "Sosnowiec" } },
-  { name: "GLI001A", latitude: 50.2945, longitude: 18.6714, address: { line1: "ul. Zwycięstwa 20", line2: "Gliwice" } },
-  { name: "ZAB001A", latitude: 50.3024, longitude: 18.7857, address: { line1: "ul. Roosevelta 10", line2: "Zabrze" } },
-  { name: "TYC001A", latitude: 50.1237, longitude: 18.9963, address: { line1: "ul. Grota-Roweckiego 5", line2: "Tychy" } },
-  { name: "DAB001A", latitude: 50.3221, longitude: 19.1946, address: { line1: "ul. 3 Maja 5", line2: "Dąbrowa Górnicza" } },
-  { name: "RUD001A", latitude: 50.2627, longitude: 18.8564, address: { line1: "ul. Niedurnego 40", line2: "Ruda Śląska" } },
-  { name: "GRU001A", latitude: 53.4836, longitude: 18.7536, address: { line1: "ul. Mickiewicza 1", line2: "Grudziądz" } },
-  { name: "WLK001A", latitude: 51.6048, longitude: 19.5657, address: { line1: "ul. Łaska 5", line2: "Pabianice" } },
-  { name: "PIL001A", latitude: 53.1503, longitude: 16.7381, address: { line1: "ul. Śródmiejska 10", line2: "Piła" } },
-  { name: "KAL001A", latitude: 51.7614, longitude: 18.0910, address: { line1: "ul. Główna 3", line2: "Kalisz" } },
-  { name: "LEG001A", latitude: 51.2070, longitude: 16.1619, address: { line1: "ul. Złotoryjska 10", line2: "Legnica" } },
-  { name: "GNI001A", latitude: 52.5352, longitude: 17.5936, address: { line1: "ul. Chrobrego 1", line2: "Gniezno" } },
-  { name: "KON001A", latitude: 52.2300, longitude: 18.2514, address: { line1: "ul. 3 Maja 5", line2: "Konin" } },
-  { name: "OST001A", latitude: 53.0765, longitude: 17.8765, address: { line1: "ul. Mickiewicza 3", line2: "Inowrocław" } },
-];
-];
-
-
 function searchPaczkomat() {
-  const query = document.getElementById("paczkomat-search").value.toLowerCase().trim();
-  if (!query || !leafletMap) return;
-
-  // Szukaj przez Nominatim (geocoding)
-  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ", Polska")}&format=json&limit=1`)
-    .then(r => r.json())
-    .then(results => {
-      if (results.length > 0) {
-        const lat = parseFloat(results[0].lat);
-        const lng = parseFloat(results[0].lon);
-        leafletMap.setView([lat, lng], 14);
-      } else {
-        alert("Nie znaleziono miejscowości: " + query);
-      }
-    })
-    .catch(() => alert("Błąd wyszukiwania"));
+  const q = document.getElementById("paczkomat-search").value.trim();
+  if (!q || !leafletMap) return;
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q+", Polska")}&format=json&limit=1`)
+    .then(r=>r.json())
+    .then(res => {
+      if (res.length) leafletMap.setView([+res[0].lat, +res[0].lon], 14);
+      else alert("Nie znaleziono: " + q);
+    }).catch(()=>alert("Błąd wyszukiwania"));
 }
 
 function selectPaczkomat(id, street, city) {
-  selectedPaczkomat = { id, street, city };
+  selectedPaczkomat = {id, street, city};
   leafletMap.closePopup();
 
   const display = document.getElementById("selected-paczkomat-display");
-  display.classList.remove("hidden");
   display.innerHTML = `
-    <div class="selected-paczkomat">
+    <div class="selected-paczkomat-box">
       <span>📦</span>
-      <div><strong>${id}</strong> · ${street}, ${city}</div>
+      <div><strong>${id}</strong><br/><span style="font-size:0.8rem;color:var(--text-muted);">${street}, ${city}</span></div>
       <button class="change-btn" onclick="changePaczkomat()">Zmień</button>
     </div>`;
-
   document.getElementById("paczkomat-map-wrapper").classList.add("hidden");
   renderSummary();
 }
 
 function changePaczkomat() {
-  document.getElementById("paczkomat-map-wrapper").classList.remove("hidden");
-  document.getElementById("selected-paczkomat-display").classList.add("hidden");
   selectedPaczkomat = null;
+  document.getElementById("paczkomat-map-wrapper").classList.remove("hidden");
+  document.getElementById("selected-paczkomat-display").innerHTML = "";
   setTimeout(() => leafletMap && leafletMap.invalidateSize(), 100);
 }
 
-function nextStep() {
-  const fname = document.getElementById("fname").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const country = document.getElementById("country").value;
-  if (!fname || !email || !country) {
-    alert("Wypełnij wszystkie wymagane pola (imię, e-mail, kraj).");
-    return;
-  }
-  if (country === "PL") {
-    const shipping = document.querySelector(".shipping-method.selected");
-    if (!shipping) { alert("Wybierz metodę dostawy."); return; }
-    if (shipping.dataset.id === "inpost-paczkomat" && !selectedPaczkomat) {
-      alert("Wybierz paczkomat z mapy."); return;
-    }
-  }
-  alert("✅ Dane zapisane! Następny krok: płatność Stripe (wkrótce).");
+// ===== PODSUMOWANIE =====
+function renderSummary() {
+  const cart    = getCart();
+  const total   = getCartTotal();
+  const country = document.getElementById("country")?.value || "";
+  const free    = country === "PL" && total >= 119;
+  const ship    = free ? 0 : (country === "PL" ? selectedShippingCost : getIntlCost(country));
+
+  document.getElementById("order-items-list").innerHTML = cart.map(item => {
+    const p = getProductById(item.id);
+    if (!p) return "";
+    return `<div class="order-item">
+      <div class="order-item-img"><img src="${p.image}" onerror="this.src='img/placeholder.jpg'"/></div>
+      <div style="flex:1">
+        <div class="order-item-name">${p.name} ${p.variant}</div>
+        <div class="order-item-var">x${item.quantity}</div>
+      </div>
+      <div class="order-item-price">${formatPrice(p.price * item.quantity)}</div>
+    </div>`;
+  }).join("") || `<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">Koszyk pusty</p>`;
+
+  document.getElementById("sum-products").textContent = formatPrice(total);
+  document.getElementById("sum-shipping").innerHTML   = ship === 0 && country
+    ? '<span style="color:#3a8a4a;font-weight:700;">Darmowa 🎉</span>'
+    : (ship ? formatPrice(ship) : "—");
+  document.getElementById("sum-total").textContent = total ? formatPrice(total + ship) : "—";
 }
 
-// Inicjalizacja
+// ===== FALLBACK PACZKOMATY =====
+const FALLBACK = [
+  {name:"WAW001",location:{latitude:52.2297,longitude:21.0122},address:{line1:"ul. Marszałkowska 10",line2:"Warszawa"}},
+  {name:"WAW002",location:{latitude:52.1959,longitude:21.0150},address:{line1:"ul. Puławska 45",line2:"Warszawa"}},
+  {name:"KRK001",location:{latitude:50.0647,longitude:19.9450},address:{line1:"ul. Floriańska 8",line2:"Kraków"}},
+  {name:"GDA001",location:{latitude:54.3520,longitude:18.6466},address:{line1:"ul. Długa 12",line2:"Gdańsk"}},
+  {name:"WRO001",location:{latitude:51.1079,longitude:17.0385},address:{line1:"ul. Świdnicka 30",line2:"Wrocław"}},
+  {name:"POZ001",location:{latitude:52.4064,longitude:16.9252},address:{line1:"ul. Półwiejska 40",line2:"Poznań"}},
+  {name:"LDZ001",location:{latitude:51.7592,longitude:19.4560},address:{line1:"ul. Piotrkowska 100",line2:"Łódź"}},
+  {name:"KAT001",location:{latitude:50.2649,longitude:19.0238},address:{line1:"ul. 3 Maja 7",line2:"Katowice"}},
+  {name:"SZC001",location:{latitude:53.4285,longitude:14.5528},address:{line1:"ul. Wojska Polskiego 5",line2:"Szczecin"}},
+  {name:"BIA001",location:{latitude:53.1325,longitude:23.1688},address:{line1:"ul. Lipowa 20",line2:"Białystok"}},
+  {name:"SLU001",location:{latitude:54.4641,longitude:17.0286},address:{line1:"ul. Wojska Polskiego 4",line2:"Słupsk"}},
+  {name:"UST001",location:{latitude:54.5804,longitude:16.8619},address:{line1:"ul. Marynarki Polskiej 5",line2:"Ustka"}},
+];
+
+// Animacja shake dla błędów
+const shakeCSS = document.createElement("style");
+shakeCSS.textContent = `@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}`;
+document.head.appendChild(shakeCSS);
+
+// Init
 renderSummary();
 updateCartIcon();
 </script>
