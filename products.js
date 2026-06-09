@@ -6,7 +6,7 @@ const products = [
     variant: "Brązowy",
     category: "mis",
     price: 59,
-    image: "img/mis-brazowy.jpg",
+    image: "img/Hda6e93c9d6be455f8bc73367cd5fe6cds.jpg",
     description: "Miękki pluszowy miś w kolorze brązowym. Idealny do przytulania.",
     color: "#8B5E3C"
   },
@@ -16,7 +16,7 @@ const products = [
     variant: "Biały",
     category: "mis",
     price: 59,
-    image: "img/mis-bialy.jpg",
+    image: "img/Hda6e93c9d6be455f8bc73367cd5fe6cds.jpg",
     description: "Miękki pluszowy miś w kolorze białym. Idealny do przytulania.",
     color: "#F5F0E8"
   },
@@ -26,7 +26,7 @@ const products = [
     variant: "Różowy",
     category: "mis",
     price: 59,
-    image: "img/mis-rozowy.jpg",
+    image: "img/Hda6e93c9d6be455f8bc73367cd5fe6cds.jpg",
     description: "Miękki pluszowy miś w kolorze różowym. Idealny do przytulania.",
     color: "#F4A7B9"
   },
@@ -38,7 +38,7 @@ const products = [
     variant: "Brązowy",
     category: "ubranko",
     price: 29,
-    image: "img/sweter-brazowy.jpg",
+    image: "img/Hda6e93c9d6be455f8bc73367cd5fe6cds.jpg",
     description: "Ręcznie dziany sweterek dla misia w kolorze brązowym.",
     color: "#8B5E3C"
   },
@@ -48,7 +48,7 @@ const products = [
     variant: "Kremowy",
     category: "ubranko",
     price: 29,
-    image: "img/sweter-kremowy.jpg",
+    image: "img/Hda6e93c9d6be455f8bc73367cd5fe6cds.jpg",
     description: "Ręcznie dziany sweterek dla misia w kolorze kremowym.",
     color: "#E8DCC8"
   },
@@ -58,7 +58,7 @@ const products = [
     variant: "Różowy",
     category: "ubranko",
     price: 29,
-    image: "img/sweter-rozowy.jpg",
+    image: "img/Hda6e93c9d6be455f8bc73367cd5fe6cds.jpg",
     description: "Ręcznie dziany sweterek dla misia w kolorze różowym.",
     color: "#F4A7B9"
   },
@@ -70,7 +70,7 @@ const products = [
     variant: "Brązowy",
     category: "zestaw",
     price: 65,
-    image: "img/zestaw-brazowy.jpg",
+    image: "img/Hda6e93c9d6be455f8bc73367cd5fe6cds.jpg",
     description: "Miś Tiny Brązowy + pasujący sweterek. Gotowy prezent w zestawie.",
     color: "#8B5E3C",
     includes: ["Miś Tiny Brązowy", "Sweterek Brązowy"]
@@ -81,7 +81,7 @@ const products = [
     variant: "Biały",
     category: "zestaw",
     price: 65,
-    image: "img/zestaw-bialy.jpg",
+    image: "img/Hda6e93c9d6be455f8bc73367cd5fe6cds.jpg",
     description: "Miś Tiny Biały + pasujący sweterek. Gotowy prezent w zestawie.",
     color: "#F5F0E8",
     includes: ["Miś Tiny Biały", "Sweterek Kremowy"]
@@ -92,7 +92,7 @@ const products = [
     variant: "Różowy",
     category: "zestaw",
     price: 65,
-    image: "img/zestaw-rozowy.jpg",
+    image: "img/Hda6e93c9d6be455f8bc73367cd5fe6cds.jpg",
     description: "Miś Tiny Różowy + pasujący sweterek. Gotowy prezent w zestawie.",
     color: "#F4A7B9",
     includes: ["Miś Tiny Różowy", "Sweterek Różowy"]
