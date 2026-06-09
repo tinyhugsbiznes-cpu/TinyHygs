@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Misie — TinyHugs</title>
+  <meta name="description" content="Pluszowe misie Tiny w trzech kolorach. Miękkie, starannie wykonane, gotowe do przytulania." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">Tiny<span>Hugs</span></a>
+    <ul class="nav-links">
+      <li><a href="misie.html" class="nav-active">Misie</a></li>
+      <li><a href="ubranka.html">Ubranka</a></li>
+      <li><a href="zestawy.html">Zestawy</a></li>
+      <li><a href="blog.html">Blog</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="cart-btn">🧸 Koszyk<span id="cart-badge">0</span></a>
+    </div>
+  </div>
+</nav>
+
+<section class="category-hero" style="--cat-color:#F2D5DF;">
+  <div class="category-hero-inner">
+    <div class="category-hero-text">
+      <span class="category-eyebrow">🐻 Kolekcja</span>
+      <h1>Misie Tiny</h1>
+      <p>Trzy kolory, jeden urok. Każdy miś szyty z miękkich, bezpiecznych materiałów — idealny do przytulania dla dzieci i dorosłych.</p>
+    </div>
+  </div>
+</section>
+
+<section class="products-section">
+  <div class="section-header">
+    <h2 class="section-title">Wybierz swojego misia</h2>
+    <span class="product-count" id="product-count"></span>
+  </div>
+  <div class="product-grid" id="product-grid"></div>
+</section>
+
+<section class="category-info">
+  <div class="category-info-inner">
+    <div class="category-info-item">
+      <span>🧶</span>
+      <strong>Miękki plusz</strong>
+      <p>Materiał najwyższej jakości, przyjazny dla alergików</p>
+    </div>
+    <div class="category-info-item">
+      <span>📏</span>
+      <strong>Wymiary</strong>
+      <p>Wysokość ok. 30 cm — idealny rozmiar do przytulania</p>
+    </div>
+    <div class="category-info-item">
+      <span>🧺</span>
+      <strong>Łatwa pielęgnacja</strong>
+      <p>Można prać w pralce w temp. 30°C w worku ochronnym</p>
+    </div>
+    <div class="category-info-item">
+      <span>🎁</span>
+      <strong>Gotowy prezent</strong>
+      <p>Każdy miś pakowany w ozdobne pudełko</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer-full">
+  <div class="footer-inner">
+    <div class="footer-col">
+      <div class="footer-logo">Tiny<span>Hugs</span></div>
+      <p class="footer-desc">Pluszowe misie i ubranka z miłością.</p>
+      <div class="footer-social"><a href="#">📸</a><a href="#">🎵</a><a href="#">👍</a></div>
+    </div>
+    <div class="footer-col">
+      <h4>Sklep</h4>
+      <ul>
+        <li><a href="misie.html">Misie</a></li>
+        <li><a href="ubranka.html">Ubranka</a></li>
+        <li><a href="zestawy.html">Zestawy</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Pomoc</h4>
+      <ul>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="dostawa.html">Dostawa</a></li>
+        <li><a href="zwroty.html">Zwroty</a></li>
+        <li><a href="kontakt.html">Kontakt</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Informacje</h4>
+      <ul>
+        <li><a href="regulamin.html">Regulamin</a></li>
+        <li><a href="polityka.html">Polityka prywatności</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2025 <strong>TinyHugs</strong></span>
+    <div class="footer-payments">
+      <span class="pay-badge">VISA</span>
+      <span class="pay-badge">Mastercard</span>
+      <span class="pay-badge">BLIK</span>
+      <span class="pay-badge">Przelew</span>
+    </div>
+  </div>
+</footer>
+
+<script src="products.js"></script>
+<script src="cart.js"></script>
+<script>
+  const grid = document.getElementById("product-grid");
+  const count = document.getElementById("product-count");
+  const filtered = products.filter(p => p.category === "mis");
+  count.textContent = filtered.length + " produkty";
+
+  grid.innerHTML = filtered.map(p => `
+    <div class="product-card">
+      <div class="product-card-img">
+        <img src="${p.image}" alt="${p.name} ${p.variant}" onerror="this.src='img/placeholder.jpg'"/>
+        <span class="product-card-badge badge-mis">Miś</span>
+      </div>
+      <div class="product-card-body">
+        <div class="product-card-name">${p.name}</div>
+        <div class="product-card-variant">
+          <span class="color-dot" style="background:${p.color}"></span>${p.variant}
+        </div>
+        <div class="product-card-footer">
+          <span class="product-card-price">${p.price} zł</span>
+          <button class="add-to-cart-btn" onclick="addToCart('${p.id}')">+ Dodaj</button>
+        </div>
+      </div>
+    </div>`).join("");
+</script>
+</body>
+</html>
