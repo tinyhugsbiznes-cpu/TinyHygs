@@ -1,1 +1,130 @@
-s
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TinyHugs — Pluszowe misie i ubranka</title>
+  <meta name="description" content="TinyHugs — ręcznie szyte pluszaki i ubranka. Misie Tiny w trzech kolorach, zestawy prezentowe." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- NAWIGACJA -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">Tiny<span>Hugs</span></a>
+    <ul class="nav-links">
+      <li><a href="#misie">Misie</a></li>
+      <li><a href="#ubranka">Ubranka</a></li>
+      <li><a href="#zestawy">Zestawy</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="cart-btn">
+        🧸 Koszyk
+        <span id="cart-badge">0</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-text">
+    <h1>Małe misie,<br/><em>wielkie uściski</em></h1>
+    <p>Pluszowe misie Tiny — miękkie, starannie wykonane, gotowe do przytulania. Dobierz swój kolor i ubranko.</p>
+    <a href="#produkty" class="btn-primary">🐻 Zobacz misie</a>
+  </div>
+  <div class="hero-img">
+    <img src="img/mis-hero.jpg" alt="Misie Tiny w swetrach — brązowy, biały i różowy" />
+  </div>
+</section>
+
+<!-- PRODUKTY -->
+<section class="products-section" id="produkty">
+  <div class="section-header">
+    <h2 class="section-title">Nasze produkty</h2>
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">Wszystkie</button>
+      <button class="filter-btn" data-filter="mis">Misie</button>
+      <button class="filter-btn" data-filter="ubranko">Ubranka</button>
+      <button class="filter-btn" data-filter="zestaw">Zestawy</button>
+    </div>
+  </div>
+  <div class="product-grid" id="product-grid">
+    <!-- Wypełniane przez JS -->
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>&copy; 2025 <strong>TinyHugs</strong> — Wszystkie prawa zastrzeżone</p>
+</footer>
+
+<!-- SKRYPTY -->
+<script src="products.js"></script>
+<script src="cart.js"></script>
+<script>
+  // === Renderowanie produktów ===
+  function renderProducts(filter = "all") {
+    const grid = document.getElementById("product-grid");
+    const filtered = filter === "all" ? products : products.filter(p => p.category === filter);
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="emoji">🧸</div>
+          <h3>Brak produktów</h3>
+          <p>W tej kategorii nie ma jeszcze produktów.</p>
+        </div>`;
+      return;
+    }
+
+    const badgeLabels = { mis: "Miś", ubranko: "Ubranko", zestaw: "Zestaw" };
+    const badgeClasses = { mis: "badge-mis", ubranko: "badge-ubranko", zestaw: "badge-zestaw" };
+
+    grid.innerHTML = filtered.map(p => `
+      <div class="product-card" data-category="${p.category}">
+        <div class="product-card-img">
+          <img src="${p.image}" alt="${p.name} ${p.variant}" onerror="this.src='img/placeholder.jpg'"/>
+          <span class="product-card-badge ${badgeClasses[p.category]}">${badgeLabels[p.category]}</span>
+        </div>
+        <div class="product-card-body">
+          <div class="product-card-name">${p.name}</div>
+          <div class="product-card-variant">
+            <span class="color-dot" style="background:${p.color}"></span>
+            ${p.variant}
+          </div>
+          ${p.includes ? `<div class="product-card-includes">Zawiera: ${p.includes.join(" + ")}</div>` : ""}
+          <div class="product-card-footer">
+            <span class="product-card-price">${p.price} zł</span>
+            <button class="add-to-cart-btn" onclick="addToCart('${p.id}')">
+              + Dodaj
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  // === Filtry ===
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderProducts(btn.dataset.filter);
+    });
+  });
+
+  // === Hash w URL np. #misie ===
+  const hashMap = { "#misie": "mis", "#ubranka": "ubranko", "#zestawy": "zestaw" };
+  const hash = window.location.hash;
+  if (hashMap[hash]) {
+    renderProducts(hashMap[hash]);
+    document.querySelector(`[data-filter="${hashMap[hash]}"]`)?.classList.add("active");
+    document.querySelector(".filter-btn.active:not([data-filter])")?.classList.remove("active");
+  } else {
+    renderProducts();
+  }
+</script>
+</body>
+</html>
