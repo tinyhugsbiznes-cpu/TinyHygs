@@ -9,24 +9,7 @@
 </head>
 <body>
 
-<!-- NAWIGACJA -->
-<nav>
-  <div class="nav-inner">
-    <a href="index.html" class="nav-logo">Tiny<span>Hugs</span></a>
-    <ul class="nav-links">
-      <li><a href="misie.html">Misie</a></li>
-      <li><a href="ubranka.html">Ubranka</a></li>
-      <li><a href="zestawy.html">Zestawy</a></li>
-      <li><a href="blog.html">Blog</a></li>
-    </ul>
-    <div class="nav-actions">
-      <a href="cart.html" class="cart-btn">
-        🧸 Koszyk
-        <span id="cart-badge">0</span>
-      </a>
-    </div>
-  </div>
-</nav>
+<div id="nav-placeholder"></div>
 
 <!-- HERO -->
 <section class="hero">
@@ -233,6 +216,8 @@
 </footer>
 
 <!-- SKRYPTY -->
+<script src="i18n.js"></script>
+<script src="nav.js"></script>
 <script src="products.js"></script>
 <script src="cart.js"></script>
 <script>
@@ -286,6 +271,8 @@
   } else {
     renderProducts();
   }
+
+renderNav("index");
 </script>
 </body>
 </html>
