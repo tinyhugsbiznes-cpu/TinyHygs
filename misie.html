@@ -122,7 +122,7 @@
           ${p.includes ? `<div class="product-card-includes">${p.includes.join(" + ")}</div>` : ""}
           <div class="product-card-footer">
             <span class="product-card-price">${formatPrice(p.price)}</span>
-            <button class="add-to-cart-btn" onclick="addToCart('${p.id}')">${t("add")}</button>
+            <button class="add-to-cart-btn" data-add-id="${p.id}">${t("add")}</button>
           </div>
         </div>
       </div>`).join("");
@@ -131,6 +131,12 @@
   document.addEventListener("DOMContentLoaded", () => {
     renderProducts();
     renderNav("misie");
+
+    // Event delegation
+    document.getElementById("product-grid").addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-add-id]");
+      if (btn) addToCart(btn.dataset.addId);
+    });
   });
 </script>
 </body>
