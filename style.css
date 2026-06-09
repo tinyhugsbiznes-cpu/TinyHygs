@@ -740,6 +740,101 @@ nav {
   .footer-bottom { flex-direction: column; align-items: flex-start; }
 }
 
+/* === STRONY KATEGORII === */
+.nav-active {
+  color: var(--brown) !important;
+  font-weight: 600 !important;
+}
+
+.category-hero {
+  background: var(--cat-color, var(--cream));
+  padding: 3.5rem 2rem 3rem;
+}
+
+.category-hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.category-eyebrow {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.6rem;
+}
+
+.category-hero-text h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  color: var(--text);
+  margin-bottom: 0.8rem;
+}
+
+.category-hero-text p {
+  color: var(--text-muted);
+  font-size: 1rem;
+  max-width: 560px;
+  line-height: 1.65;
+}
+
+.product-count {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* === INFO SEKCJA POD PRODUKTAMI === */
+.category-info {
+  background: var(--warm-white);
+  padding: 3rem 2rem;
+  border-top: 1px solid var(--border);
+}
+
+.category-info-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.category-info-item {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.category-info-item span { font-size: 2rem; }
+.category-info-item strong { font-size: 0.9rem; color: var(--text); }
+.category-info-item p { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+
+/* === BANER OSZCZĘDNOŚCI (zestawy) === */
+.savings-banner {
+  background: #F0FFF0;
+  border-top: 1px solid #B8E0BA;
+  border-bottom: 1px solid #B8E0BA;
+  text-align: center;
+  padding: 0.8rem 2rem;
+  font-size: 0.92rem;
+  color: #2E6B30;
+}
+
+.savings-banner strong { font-weight: 700; }
+
+@media (max-width: 768px) {
+  .category-info-inner { grid-template-columns: repeat(2, 1fr); }
+  .category-hero { padding: 2rem 1rem; }
+}
+
+@media (max-width: 480px) {
+  .category-info-inner { grid-template-columns: 1fr; }
+}
+
 /* === FOOTER (stary — nadpisany) === */
 footer strong { color: var(--brown); }
 
