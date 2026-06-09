@@ -116,6 +116,7 @@
 
     /* HIDDEN */
     .hidden { display: none !important; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     @media (max-width: 768px) {
       .checkout-page { padding: 0 1rem 3rem; }
@@ -218,7 +219,13 @@
                 <input type="text" id="paczkomat-search" placeholder="np. Warszawa, Kraków, 30-001..."/>
                 <button onclick="searchPaczkomat()">Szukaj</button>
               </div>
-              <div id="paczkomat-map"></div>
+              <div style="position:relative;">
+                <div id="map-loading" style="display:none;position:absolute;inset:0;background:rgba(255,255,255,0.8);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:0.5rem;border-radius:var(--radius-sm);">
+                  <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--brown);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+                  <span style="font-size:0.82rem;color:var(--text-muted);">Ładowanie paczkomatów...</span>
+                </div>
+                <div id="paczkomat-map"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -363,46 +370,14 @@ function selectShipping(el, hasPaczkomat) {
   renderSummary();
 }
 
-// === MAPA PACZKOMATÓW (Leaflet + OpenStreetMap) ===
-const PACZKOMATY = [
-  { id: "WAW001", city: "Warszawa", address: "ul. Marszałkowska 10", lat: 52.2297, lng: 21.0122 },
-  { id: "WAW002", city: "Warszawa", address: "ul. Puławska 45",      lat: 52.1959, lng: 21.0150 },
-  { id: "WAW003", city: "Warszawa", address: "al. Jerozolimskie 100",lat: 52.2255, lng: 21.0049 },
-  { id: "WAW004", city: "Warszawa", address: "ul. Prosta 70",        lat: 52.2340, lng: 20.9840 },
-  { id: "WAW005", city: "Warszawa", address: "ul. Wołoska 12",       lat: 52.1843, lng: 20.9994 },
-  { id: "KRK001", city: "Kraków",   address: "ul. Floriańska 8",     lat: 50.0647, lng: 19.9450 },
-  { id: "KRK002", city: "Kraków",   address: "ul. Kazimierza W. 20", lat: 50.0573, lng: 19.9437 },
-  { id: "KRK003", city: "Kraków",   address: "ul. Długa 1",          lat: 50.0680, lng: 19.9360 },
-  { id: "GDA001", city: "Gdańsk",   address: "ul. Długa 12",         lat: 54.3520, lng: 18.6466 },
-  { id: "GDA002", city: "Gdańsk",   address: "ul. Grunwaldzka 56",   lat: 54.3735, lng: 18.6180 },
-  { id: "GDA003", city: "Gdańsk",   address: "ul. Wita Stwosza 30",  lat: 54.3693, lng: 18.6205 },
-  { id: "WRO001", city: "Wrocław",  address: "ul. Świdnicka 30",     lat: 51.1079, lng: 17.0385 },
-  { id: "WRO002", city: "Wrocław",  address: "ul. Oławska 10",       lat: 51.1100, lng: 17.0345 },
-  { id: "POZ001", city: "Poznań",   address: "ul. Półwiejska 40",    lat: 52.4064, lng: 16.9252 },
-  { id: "POZ002", city: "Poznań",   address: "ul. Roosevelta 6",     lat: 52.4082, lng: 16.9336 },
-  { id: "LDZ001", city: "Łódź",     address: "ul. Piotrkowska 100",  lat: 51.7592, lng: 19.4560 },
-  { id: "LDZ002", city: "Łódź",     address: "ul. Kilińskiego 50",   lat: 51.7720, lng: 19.4660 },
-  { id: "KAT001", city: "Katowice", address: "ul. 3 Maja 7",         lat: 50.2649, lng: 19.0238 },
-  { id: "KAT002", city: "Katowice", address: "ul. Mariacka 1",       lat: 50.2580, lng: 19.0199 },
-  { id: "SZC001", city: "Szczecin", address: "ul. Wojska Polskiego 5",lat: 53.4285, lng: 14.5528 },
-  { id: "BIA001", city: "Białystok",address: "ul. Lipowa 20",        lat: 53.1325, lng: 23.1688 },
-  { id: "LUB001", city: "Lublin",   address: "ul. Krakowskie Przeds. 3",lat: 51.2465, lng: 22.5684 },
-  { id: "RZE001", city: "Rzeszów",  address: "ul. 3 Maja 12",        lat: 50.0412, lng: 21.9991 },
-  { id: "OLS001", city: "Olsztyn",  address: "ul. Staromiejska 1",   lat: 53.7784, lng: 20.4801 },
-  { id: "SLU001", city: "Słupsk",   address: "ul. Wojska Polskiego 4",lat: 54.4641, lng: 17.0286 },
-  { id: "UST001", city: "Ustka",    address: "ul. Marynarki Polskiej 5",lat: 54.5804, lng: 16.8619 },
-  { id: "GDY001", city: "Gdynia",   address: "ul. Świętojańska 30",  lat: 54.5189, lng: 18.5305 },
-  { id: "TOR001", city: "Toruń",    address: "ul. Szeroka 15",       lat: 53.0138, lng: 18.5984 },
-  { id: "BYD001", city: "Bydgoszcz",address: "ul. Dworcowa 50",      lat: 53.1235, lng: 18.0084 },
-  { id: "KIE001", city: "Kielce",   address: "ul. Sienkiewicza 25",  lat: 50.8661, lng: 20.6286 },
-];
-
+// === MAPA PACZKOMATÓW (Leaflet + OpenStreetMap + InPost API) ===
 let selectedPaczkomat = null;
 let leafletMap = null;
-let markers = [];
+let allMarkers = L.layerGroup ? null : null;
+let markersLayer = null;
 
-function initMap() {
-  if (leafletMap) return;
+async function initMap() {
+  if (leafletMap) { leafletMap.invalidateSize(); return; }
 
   leafletMap = L.map("paczkomat-map").setView([52.0, 19.5], 6);
 
@@ -411,50 +386,153 @@ function initMap() {
     maxZoom: 18
   }).addTo(leafletMap);
 
+  markersLayer = L.layerGroup().addTo(leafletMap);
+
+  // Pokaż spinner
+  document.getElementById("map-loading").style.display = "flex";
+
+  try {
+    // InPost publiczne API - wszystkie paczkomaty w Polsce
+    const res = await fetch("https://api.inpost.pl/v1/points?type=parcel_locker&fields=name,address,location&per_page=10000&page=1", {
+      headers: { "Accept": "application/json" }
+    });
+    const data = await res.json();
+    renderInpostMarkers(data.items || []);
+  } catch(e) {
+    // Fallback - jeśli API niedostępne z powodu CORS, użyj proxy
+    try {
+      const res2 = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://api.inpost.pl/v1/points?type=parcel_locker&fields=name,address,location&per_page=5000"));
+      const data2 = await res2.json();
+      renderInpostMarkers(data2.items || []);
+    } catch(e2) {
+      // Ostateczny fallback - duża lista przykładowych paczkomatów
+      renderInpostMarkers(FALLBACK_PACZKOMATY);
+    }
+  }
+
+  document.getElementById("map-loading").style.display = "none";
+}
+
+function renderInpostMarkers(items) {
+  markersLayer.clearLayers();
+
   const pinkIcon = L.divIcon({
     className: "",
-    html: `<div style="background:#E8899F;width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -32]
+    html: `<div style="background:#E8899F;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    popupAnchor: [0, -10]
   });
 
-  PACZKOMATY.forEach(p => {
-    const marker = L.marker([p.lat, p.lng], { icon: pinkIcon }).addTo(leafletMap);
+  const selectedIcon = L.divIcon({
+    className: "",
+    html: `<div style="background:#8B5E3C;width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5);"></div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    popupAnchor: [0, -12]
+  });
+
+  items.forEach(p => {
+    const lat = p.location?.latitude || p.latitude;
+    const lng = p.location?.longitude || p.longitude;
+    const name = p.name;
+    const street = p.address?.line1 || p.address_details?.street + " " + p.address_details?.building_number || "";
+    const city = p.address?.line2 || p.address_details?.city || "";
+    if (!lat || !lng) return;
+
+    const icon = selectedPaczkomat?.id === name ? selectedIcon : pinkIcon;
+    const marker = L.marker([lat, lng], { icon });
     marker.bindPopup(`
-      <div class="popup-title">📦 ${p.id}</div>
-      <div class="popup-addr">${p.address}<br/>${p.city}</div>
+      <div class="popup-title">📦 ${name}</div>
+      <div class="popup-addr">${street}<br/>${city}</div>
       <div class="popup-open">✅ Czynny 24/7</div>
-      <button class="popup-btn" onclick="selectPaczkomat('${p.id}')">Wybierz ten paczkomat</button>
+      <button class="popup-btn" onclick="selectPaczkomat('${name}','${street}','${city}')">Wybierz</button>
     `, { maxWidth: 220 });
-    markers.push({ id: p.id, marker });
+    markersLayer.addLayer(marker);
   });
 }
+
+// Fallback - ręczna lista na wypadek braku API
+const FALLBACK_PACZKOMATY = [
+  { name: "WAW001A", latitude: 52.2297, longitude: 21.0122, address: { line1: "ul. Marszałkowska 10", line2: "Warszawa" } },
+  { name: "WAW002A", latitude: 52.1959, longitude: 21.0150, address: { line1: "ul. Puławska 45", line2: "Warszawa" } },
+  { name: "WAW003A", latitude: 52.2255, longitude: 21.0049, address: { line1: "al. Jerozolimskie 100", line2: "Warszawa" } },
+  { name: "WAW004A", latitude: 52.2340, longitude: 20.9840, address: { line1: "ul. Prosta 70", line2: "Warszawa" } },
+  { name: "WAW005A", latitude: 52.2520, longitude: 21.0440, address: { line1: "ul. Targowa 60", line2: "Warszawa" } },
+  { name: "WAW006A", latitude: 52.2180, longitude: 21.0580, address: { line1: "ul. Grochowska 200", line2: "Warszawa" } },
+  { name: "WAW007A", latitude: 52.1843, longitude: 20.9994, address: { line1: "ul. Wołoska 12", line2: "Warszawa" } },
+  { name: "KRK001A", latitude: 50.0647, longitude: 19.9450, address: { line1: "ul. Floriańska 8", line2: "Kraków" } },
+  { name: "KRK002A", latitude: 50.0573, longitude: 19.9437, address: { line1: "ul. Kazimierza W. 20", line2: "Kraków" } },
+  { name: "KRK003A", latitude: 50.0680, longitude: 19.9360, address: { line1: "ul. Długa 1", line2: "Kraków" } },
+  { name: "KRK004A", latitude: 50.0490, longitude: 19.9670, address: { line1: "ul. Wielicka 50", line2: "Kraków" } },
+  { name: "GDA001A", latitude: 54.3520, longitude: 18.6466, address: { line1: "ul. Długa 12", line2: "Gdańsk" } },
+  { name: "GDA002A", latitude: 54.3735, longitude: 18.6180, address: { line1: "ul. Grunwaldzka 56", line2: "Gdańsk" } },
+  { name: "GDA003A", latitude: 54.3693, longitude: 18.6205, address: { line1: "ul. Wita Stwosza 30", line2: "Gdańsk" } },
+  { name: "WRO001A", latitude: 51.1079, longitude: 17.0385, address: { line1: "ul. Świdnicka 30", line2: "Wrocław" } },
+  { name: "WRO002A", latitude: 51.1100, longitude: 17.0345, address: { line1: "ul. Oławska 10", line2: "Wrocław" } },
+  { name: "WRO003A", latitude: 51.0940, longitude: 17.0280, address: { line1: "ul. Ślężna 30", line2: "Wrocław" } },
+  { name: "POZ001A", latitude: 52.4064, longitude: 16.9252, address: { line1: "ul. Półwiejska 40", line2: "Poznań" } },
+  { name: "POZ002A", latitude: 52.4082, longitude: 16.9336, address: { line1: "ul. Roosevelta 6", line2: "Poznań" } },
+  { name: "LDZ001A", latitude: 51.7592, longitude: 19.4560, address: { line1: "ul. Piotrkowska 100", line2: "Łódź" } },
+  { name: "LDZ002A", latitude: 51.7720, longitude: 19.4660, address: { line1: "ul. Kilińskiego 50", line2: "Łódź" } },
+  { name: "KAT001A", latitude: 50.2649, longitude: 19.0238, address: { line1: "ul. 3 Maja 7", line2: "Katowice" } },
+  { name: "SZC001A", latitude: 53.4285, longitude: 14.5528, address: { line1: "ul. Wojska Polskiego 5", line2: "Szczecin" } },
+  { name: "BIA001A", latitude: 53.1325, longitude: 23.1688, address: { line1: "ul. Lipowa 20", line2: "Białystok" } },
+  { name: "LUB001A", latitude: 51.2465, longitude: 22.5684, address: { line1: "ul. Krakowskie Przeds. 3", line2: "Lublin" } },
+  { name: "RZE001A", latitude: 50.0412, longitude: 21.9991, address: { line1: "ul. 3 Maja 12", line2: "Rzeszów" } },
+  { name: "OLS001A", latitude: 53.7784, longitude: 20.4801, address: { line1: "ul. Staromiejska 1", line2: "Olsztyn" } },
+  { name: "SLU001A", latitude: 54.4641, longitude: 17.0286, address: { line1: "ul. Wojska Polskiego 4", line2: "Słupsk" } },
+  { name: "UST001A", latitude: 54.5804, longitude: 16.8619, address: { line1: "ul. Marynarki Polskiej 5", line2: "Ustka" } },
+  { name: "GDY001A", latitude: 54.5189, longitude: 18.5305, address: { line1: "ul. Świętojańska 30", line2: "Gdynia" } },
+  { name: "TOR001A", latitude: 53.0138, longitude: 18.5984, address: { line1: "ul. Szeroka 15", line2: "Toruń" } },
+  { name: "BYD001A", latitude: 53.1235, longitude: 18.0084, address: { line1: "ul. Dworcowa 50", line2: "Bydgoszcz" } },
+  { name: "KIE001A", latitude: 50.8661, longitude: 20.6286, address: { line1: "ul. Sienkiewicza 25", line2: "Kielce" } },
+  { name: "ZIE001A", latitude: 51.9356, longitude: 15.5062, address: { line1: "ul. Kupiecka 10", line2: "Zielona Góra" } },
+  { name: "OPO001A", latitude: 50.6751, longitude: 17.9213, address: { line1: "ul. Krakowska 40", line2: "Opole" } },
+  { name: "GOR001A", latitude: 53.7352, longitude: 15.2432, address: { line1: "ul. Sikorskiego 20", line2: "Koszalin" } },
+  { name: "ELB001A", latitude: 54.1522, longitude: 19.4025, address: { line1: "ul. Traugutta 5", line2: "Elbląg" } },
+  { name: "PLO001A", latitude: 52.5463, longitude: 19.7028, address: { line1: "ul. Tumska 10", line2: "Płock" } },
+  { name: "RAD001A", latitude: 51.4027, longitude: 21.1471, address: { line1: "ul. Żeromskiego 5", line2: "Radom" } },
+  { name: "CZE001A", latitude: 50.8118, longitude: 19.1203, address: { line1: "ul. NMP 10", line2: "Częstochowa" } },
+  { name: "SOS001A", latitude: 50.2863, longitude: 19.1041, address: { line1: "ul. 3 Maja 30", line2: "Sosnowiec" } },
+  { name: "GLI001A", latitude: 50.2945, longitude: 18.6714, address: { line1: "ul. Zwycięstwa 20", line2: "Gliwice" } },
+  { name: "ZAB001A", latitude: 50.3024, longitude: 18.7857, address: { line1: "ul. Roosevelta 10", line2: "Zabrze" } },
+  { name: "TYC001A", latitude: 50.1237, longitude: 18.9963, address: { line1: "ul. Grota-Roweckiego 5", line2: "Tychy" } },
+  { name: "DAB001A", latitude: 50.3221, longitude: 19.1946, address: { line1: "ul. 3 Maja 5", line2: "Dąbrowa Górnicza" } },
+  { name: "RUD001A", latitude: 50.2627, longitude: 18.8564, address: { line1: "ul. Niedurnego 40", line2: "Ruda Śląska" } },
+  { name: "GRU001A", latitude: 53.4836, longitude: 18.7536, address: { line1: "ul. Mickiewicza 1", line2: "Grudziądz" } },
+  { name: "WLK001A", latitude: 51.6048, longitude: 19.5657, address: { line1: "ul. Łaska 5", line2: "Pabianice" } },
+  { name: "PIL001A", latitude: 53.1503, longitude: 16.7381, address: { line1: "ul. Śródmiejska 10", line2: "Piła" } },
+  { name: "KAL001A", latitude: 51.7614, longitude: 18.0910, address: { line1: "ul. Główna 3", line2: "Kalisz" } },
+  { name: "LEG001A", latitude: 51.2070, longitude: 16.1619, address: { line1: "ul. Złotoryjska 10", line2: "Legnica" } },
+  { name: "GNI001A", latitude: 52.5352, longitude: 17.5936, address: { line1: "ul. Chrobrego 1", line2: "Gniezno" } },
+  { name: "KON001A", latitude: 52.2300, longitude: 18.2514, address: { line1: "ul. 3 Maja 5", line2: "Konin" } },
+  { name: "OST001A", latitude: 53.0765, longitude: 17.8765, address: { line1: "ul. Mickiewicza 3", line2: "Inowrocław" } },
+];
+];
+
 
 function searchPaczkomat() {
   const query = document.getElementById("paczkomat-search").value.toLowerCase().trim();
-  if (!query) return;
+  if (!query || !leafletMap) return;
 
-  const found = PACZKOMATY.filter(p =>
-    p.city.toLowerCase().includes(query) ||
-    p.address.toLowerCase().includes(query) ||
-    p.id.toLowerCase().includes(query)
-  );
-
-  if (found.length > 0) {
-    leafletMap.setView([found[0].lat, found[0].lng], 13);
-    const m = markers.find(m => m.id === found[0].id);
-    if (m) m.marker.openPopup();
-  } else {
-    alert(`Nie znaleziono paczkomatów dla "${query}"`);
-  }
+  // Szukaj przez Nominatim (geocoding)
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ", Polska")}&format=json&limit=1`)
+    .then(r => r.json())
+    .then(results => {
+      if (results.length > 0) {
+        const lat = parseFloat(results[0].lat);
+        const lng = parseFloat(results[0].lon);
+        leafletMap.setView([lat, lng], 14);
+      } else {
+        alert("Nie znaleziono miejscowości: " + query);
+      }
+    })
+    .catch(() => alert("Błąd wyszukiwania"));
 }
 
-function selectPaczkomat(id) {
-  const p = PACZKOMATY.find(p => p.id === id);
-  if (!p) return;
-  selectedPaczkomat = p;
-
+function selectPaczkomat(id, street, city) {
+  selectedPaczkomat = { id, street, city };
   leafletMap.closePopup();
 
   const display = document.getElementById("selected-paczkomat-display");
@@ -462,7 +540,7 @@ function selectPaczkomat(id) {
   display.innerHTML = `
     <div class="selected-paczkomat">
       <span>📦</span>
-      <div><strong>${p.id}</strong> · ${p.address}, ${p.city}</div>
+      <div><strong>${id}</strong> · ${street}, ${city}</div>
       <button class="change-btn" onclick="changePaczkomat()">Zmień</button>
     </div>`;
 
@@ -474,7 +552,7 @@ function changePaczkomat() {
   document.getElementById("paczkomat-map-wrapper").classList.remove("hidden");
   document.getElementById("selected-paczkomat-display").classList.add("hidden");
   selectedPaczkomat = null;
-  setTimeout(() => leafletMap.invalidateSize(), 100);
+  setTimeout(() => leafletMap && leafletMap.invalidateSize(), 100);
 }
 
 function nextStep() {
