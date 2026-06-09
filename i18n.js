@@ -225,9 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
   applyTranslations();
 });
 
-// === PEŁNA AKTUALIZACJA STRONY PO ZMIANIE JĘZYKA ===
-// Nadpisuje setLang żeby przeładować cały widok
-const _origSetLang = setLang;
+// === ZMIANA JĘZYKA ===
 window.setLang = function(code) {
   if (!TRANSLATIONS[code]) return;
   currentLang = code;
@@ -238,24 +236,14 @@ window.setLang = function(code) {
   document.getElementById("lang-selector")?.classList.remove("open");
 
   // Przeładuj nawigację
-  const activePage = document.body.dataset.page || "";
+  const activePage = document.body?.dataset?.page || "";
   if (typeof renderNav === "function") renderNav(activePage);
 
-  // Przeładuj produkty jeśli są
+  // Przelicz i odśwież produkty
   if (typeof renderProducts === "function") renderProducts();
   if (typeof renderCart === "function") renderCart();
 
-  // Aktualizuj data-i18n
-  document.querySelectorAll("[data-i18n]").forEach(el => {
-    el.textContent = t(el.dataset.i18n);
-  });
-
-  // Aktualizuj ceny
-  document.querySelectorAll("[data-price]").forEach(el => {
-    el.textContent = formatPrice(parseFloat(el.dataset.price));
-  });
-
-  // Aktualizuj sekcje statyczne przez id
+  // Odśwież elementy z id
   _refreshStaticSections();
 };
 
@@ -284,7 +272,11 @@ function _refreshStaticSections() {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
   }
-  // Darmowa wysyłka threshold
+  // Ceny
+  document.querySelectorAll("[data-price]").forEach(el => {
+    el.textContent = formatPrice(parseFloat(el.dataset.price));
+  });
+  // Próg darmowej wysyłki
   const fst = document.getElementById("free-shipping-threshold");
   if (fst) fst.textContent = formatPrice(119);
 }
