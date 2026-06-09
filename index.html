@@ -220,17 +220,24 @@
 <script src="products.js"></script>
 <script src="cart.js"></script>
 <script>
-  function renderProducts(filter = "all") {
-    const grid = document.getElementById("product-grid");
-    const filtered = filter === "all" ? products : products.filter(p => p.category === filter);
-
-    if (filtered.length === 0) {
-      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="emoji">🧸</div><h3>Brak produktów</h3><p>W tej kategorii nie ma jeszcze produktów.</p></div>`;
-      return;
+  function renderProducts(filter) {
+    if (filter === undefined) {
+      // Zachowaj aktywny filtr
+      const activeBtn = document.querySelector(".filter-btn.active");
+      filter = activeBtn ? activeBtn.dataset.filter : "all";
     }
 
-    const badgeLabels = { mis: "Miś", ubranko: "Ubranko", zestaw: "Zestaw" };
+    const grid = document.getElementById("product-grid");
+    if (!grid) return;
+    const filtered = filter === "all" ? products : products.filter(p => p.category === filter);
+
+    const badgeLabels = { mis: t("bear"), ubranko: t("clothes"), zestaw: t("set") };
     const badgeClasses = { mis: "badge-mis", ubranko: "badge-ubranko", zestaw: "badge-zestaw" };
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="emoji">🧸</div><h3>${t("cart_empty")}</h3></div>`;
+      return;
+    }
 
     grid.innerHTML = filtered.map(p => `
       <div class="product-card" data-category="${p.category}">
@@ -241,37 +248,51 @@
         <div class="product-card-body">
           <div class="product-card-name">${p.name}</div>
           <div class="product-card-variant">
-            <span class="color-dot" style="background:${p.color}"></span>
-            ${p.variant}
+            <span class="color-dot" style="background:${p.color}"></span>${p.variant}
           </div>
-          ${p.includes ? `<div class="product-card-includes">Zawiera: ${p.includes.join(" + ")}</div>` : ""}
+          ${p.includes ? `<div class="product-card-includes">${p.includes.join(" + ")}</div>` : ""}
           <div class="product-card-footer">
-            <span class="product-card-price">${p.price} zł</span>
-            <button class="add-to-cart-btn" onclick="addToCart('${p.id}')">+ Dodaj</button>
+            <span class="product-card-price">${formatPrice(p.price)}</span>
+            <button class="add-to-cart-btn" onclick="addToCart('${p.id}')">${t("add")}</button>
           </div>
         </div>
       </div>`).join("");
   }
 
-  document.querySelectorAll(".filter-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      renderProducts(btn.dataset.filter);
+  // Filtry
+  document.addEventListener("DOMContentLoaded", () => {
+    // Aktualizuj tekst filtrów
+    function updateFilterLabels() {
+      const map = { all: t("all"), mis: t("nav_bears"), ubranko: t("nav_clothes"), zestaw: t("nav_sets") };
+      document.querySelectorAll(".filter-btn").forEach(btn => {
+        const key = btn.dataset.filter;
+        if (map[key]) btn.textContent = map[key];
+      });
+    }
+
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderProducts(btn.dataset.filter);
+      });
     });
+
+    updateFilterLabels();
+    renderProducts("all");
+    renderNav("index");
   });
 
-  const hashMap = { "#misie": "mis", "#ubranka": "ubranko", "#zestawy": "zestaw" };
-  const hash = window.location.hash;
-  if (hashMap[hash]) {
-    renderProducts(hashMap[hash]);
-    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-    document.querySelector(`[data-filter="${hashMap[hash]}"]`)?.classList.add("active");
-  } else {
-    renderProducts();
-  }
-
-renderNav("index");
+  // Nadpisz setLang żeby też aktualizował filtry i produkty
+  const _origSetLangIndex = window.setLang;
+  window.setLang = function(code) {
+    _origSetLangIndex(code);
+    // Aktualizuj etykiety filtrów
+    const map = { all: t("all"), mis: t("nav_bears"), ubranko: t("nav_clothes"), zestaw: t("nav_sets") };
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      const key = btn.dataset.filter;
+      if (map[key]) btn.textContent = map[key];
+    });
+  };
 </script>
 </body>
-</html>
