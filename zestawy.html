@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zestawy — TinyHugs</title>
+  <meta name="description" content="Zestawy TinyHugs — miś i ubranko w jednym pudełku. Gotowy prezent na każdą okazję." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">Tiny<span>Hugs</span></a>
+    <ul class="nav-links">
+      <li><a href="misie.html">Misie</a></li>
+      <li><a href="ubranka.html">Ubranka</a></li>
+      <li><a href="zestawy.html" class="nav-active">Zestawy</a></li>
+      <li><a href="blog.html">Blog</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="cart-btn">🧸 Koszyk<span id="cart-badge">0</span></a>
+    </div>
+  </div>
+</nav>
+
+<section class="category-hero" style="--cat-color:#D5F2D8;">
+  <div class="category-hero-inner">
+    <div class="category-hero-text">
+      <span class="category-eyebrow">🎁 Kolekcja</span>
+      <h1>Zestawy Tiny</h1>
+      <p>Miś + ubranko w jednym pudełku. Gotowy prezent na urodziny, święta i każdą inną okazję — bez kombinowania.</p>
+    </div>
+  </div>
+</section>
+
+<div class="savings-banner">
+  🎉 Zestaw to oszczędność <strong>23 zł</strong> w porównaniu do zakupu osobno!
+</div>
+
+<section class="products-section">
+  <div class="section-header">
+    <h2 class="section-title">Wybierz zestaw</h2>
+    <span class="product-count" id="product-count"></span>
+  </div>
+  <div class="product-grid" id="product-grid"></div>
+</section>
+
+<section class="category-info">
+  <div class="category-info-inner">
+    <div class="category-info-item">
+      <span>🎁</span>
+      <strong>Gotowy prezent</strong>
+      <p>Miś i ubranko w ozdobnym pudełku — zero pakowania</p>
+    </div>
+    <div class="category-info-item">
+      <span>💰</span>
+      <strong>Oszczędzasz 23 zł</strong>
+      <p>Taniej niż kupować miśa i ubranko osobno</p>
+    </div>
+    <div class="category-info-item">
+      <span>🚚</span>
+      <strong>Szybka dostawa</strong>
+      <p>Wysyłka w 1-2 dni roboczych</p>
+    </div>
+    <div class="category-info-item">
+      <span>↩️</span>
+      <strong>Zwrot 14 dni</strong>
+      <p>Bez podania przyczyny — pełny zwrot kosztów</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer-full">
+  <div class="footer-inner">
+    <div class="footer-col">
+      <div class="footer-logo">Tiny<span>Hugs</span></div>
+      <p class="footer-desc">Pluszowe misie i ubranka z miłością.</p>
+      <div class="footer-social"><a href="#">📸</a><a href="#">🎵</a><a href="#">👍</a></div>
+    </div>
+    <div class="footer-col">
+      <h4>Sklep</h4>
+      <ul>
+        <li><a href="misie.html">Misie</a></li>
+        <li><a href="ubranka.html">Ubranka</a></li>
+        <li><a href="zestawy.html">Zestawy</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Pomoc</h4>
+      <ul>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="dostawa.html">Dostawa</a></li>
+        <li><a href="zwroty.html">Zwroty</a></li>
+        <li><a href="kontakt.html">Kontakt</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Informacje</h4>
+      <ul>
+        <li><a href="regulamin.html">Regulamin</a></li>
+        <li><a href="polityka.html">Polityka prywatności</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2025 <strong>TinyHugs</strong></span>
+    <div class="footer-payments">
+      <span class="pay-badge">VISA</span>
+      <span class="pay-badge">Mastercard</span>
+      <span class="pay-badge">BLIK</span>
+      <span class="pay-badge">Przelew</span>
+    </div>
+  </div>
+</footer>
+
+<script src="products.js"></script>
+<script src="cart.js"></script>
+<script>
+  const grid = document.getElementById("product-grid");
+  const count = document.getElementById("product-count");
+  const filtered = products.filter(p => p.category === "zestaw");
+  count.textContent = filtered.length + " produkty";
+
+  grid.innerHTML = filtered.map(p => `
+    <div class="product-card">
+      <div class="product-card-img">
+        <img src="${p.image}" alt="${p.name} ${p.variant}" onerror="this.src='img/placeholder.jpg'"/>
+        <span class="product-card-badge badge-zestaw">Zestaw</span>
+      </div>
+      <div class="product-card-body">
+        <div class="product-card-name">${p.name}</div>
+        <div class="product-card-variant">
+          <span class="color-dot" style="background:${p.color}"></span>${p.variant}
+        </div>
+        <div class="product-card-includes">Zawiera: ${p.includes.join(" + ")}</div>
+        <div class="product-card-footer">
+          <span class="product-card-price">${p.price} zł</span>
+          <button class="add-to-cart-btn" onclick="addToCart('${p.id}')">+ Dodaj</button>
+        </div>
+      </div>
+    </div>`).join("");
+</script>
+</body>
+</html>
