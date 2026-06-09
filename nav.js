@@ -58,7 +58,10 @@ function renderNav(activePage) {
     document.body.insertAdjacentHTML("afterbegin", navHTML);
   }
 
-  updateCartIcon();
+  // Odśwież badge koszyka
+  setTimeout(() => {
+    if (typeof updateCartIcon === "function") updateCartIcon();
+  }, 0);
 }
 
 function toggleLangMenu() {
