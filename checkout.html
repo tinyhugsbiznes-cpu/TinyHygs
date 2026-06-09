@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Zamówienie — TinyHugs</title>
   <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
   <style>
     .checkout-page { max-width: 1000px; margin: 2.5rem auto; padding: 0 2rem 4rem; }
     .checkout-page h1 { font-family: var(--font-display); font-size: 2rem; margin-bottom: 2rem; }
@@ -74,33 +75,17 @@
     .paczkomat-search button:hover { background: var(--blush-dark); }
 
     #paczkomat-map {
-      width: 100%; height: 320px; border-radius: var(--radius-sm);
+      width: 100%; height: 380px; border-radius: var(--radius-sm);
       border: 1.5px solid var(--border); overflow: hidden;
-      background: #e8e0d8;
-      position: relative;
+      z-index: 1;
     }
-
-    .map-pins { position: absolute; inset: 0; }
-    .map-city-label { position: absolute; font-size: 0.7rem; color: #555; font-weight: 600; }
-    .map-pin {
-      position: absolute; width: 28px; height: 28px; transform: translate(-50%,-100%);
-      cursor: pointer; transition: transform 0.15s;
-    }
-    .map-pin:hover { transform: translate(-50%,-100%) scale(1.2); }
-    .map-pin svg { width: 28px; height: 28px; }
-    .map-pin.selected svg path:first-child { fill: var(--brown); }
-
-    .map-popup {
-      position: absolute; background: #fff; border-radius: 10px;
-      padding: 0.8rem 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      font-size: 0.8rem; min-width: 200px; z-index: 10;
-      border: 1.5px solid var(--border);
-    }
-    .map-popup h4 { font-weight: 700; margin-bottom: 0.3rem; color: var(--text); }
-    .map-popup p { color: var(--text-muted); margin-bottom: 0.5rem; line-height: 1.4; }
-    .map-popup button { background: var(--brown); color: #fff; padding: 0.4rem 0.9rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; }
-    .map-popup button:hover { background: var(--blush-dark); }
-    .map-popup .close-popup { position: absolute; top: 6px; right: 8px; background: none; color: var(--text-muted); font-size: 1rem; }
+    .leaflet-popup-content-wrapper { border-radius: 12px !important; font-family: var(--font-body); }
+    .leaflet-popup-content { margin: 12px 16px !important; }
+    .popup-title { font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 4px; }
+    .popup-addr { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; line-height: 1.4; }
+    .popup-open { font-size: 0.75rem; color: #4A7A4A; font-weight: 600; margin-bottom: 8px; }
+    .popup-btn { background: #8B5E3C; color: #fff; border: none; padding: 6px 14px; border-radius: 50px; font-size: 0.8rem; font-weight: 600; cursor: pointer; width: 100%; }
+    .popup-btn:hover { background: #E8899F; }
 
     .selected-paczkomat {
       display: flex; align-items: center; gap: 0.7rem;
@@ -140,7 +125,7 @@
     }
   </style>
 </head>
-<body>
+<body data-page="checkout">
 <div id="nav-placeholder"></div>
 
 <main class="checkout-page">
@@ -233,9 +218,7 @@
                 <input type="text" id="paczkomat-search" placeholder="np. Warszawa, Kraków, 30-001..."/>
                 <button onclick="searchPaczkomat()">Szukaj</button>
               </div>
-              <div id="paczkomat-map">
-                <div class="map-pins" id="map-pins"></div>
-              </div>
+              <div id="paczkomat-map"></div>
             </div>
           </div>
         </div>
@@ -272,6 +255,7 @@
   </div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="products.js"></script>
 <script src="i18n.js"></script>
 <script src="cart.js"></script>
@@ -372,96 +356,106 @@ function selectShipping(el, hasPaczkomat) {
   if (hasPaczkomat) {
     paczkomatSection.classList.remove("hidden");
     initMap();
+    setTimeout(() => leafletMap && leafletMap.invalidateSize(), 200);
   } else {
     paczkomatSection.classList.add("hidden");
   }
   renderSummary();
 }
 
-// === MAPA PACZKOMATÓW ===
+// === MAPA PACZKOMATÓW (Leaflet + OpenStreetMap) ===
 const PACZKOMATY = [
-  { id: "WAW001", name: "WAW001", city: "Warszawa", address: "ul. Marszałkowska 10", x: 52, y: 38 },
-  { id: "WAW002", name: "WAW002", city: "Warszawa", address: "ul. Puławska 45", x: 55, y: 45 },
-  { id: "WAW003", name: "WAW003", city: "Warszawa", address: "al. Jerozolimskie 100", x: 48, y: 40 },
-  { id: "KRK001", name: "KRK001", city: "Kraków", address: "ul. Floriańska 8", x: 52, y: 65 },
-  { id: "KRK002", name: "KRK002", city: "Kraków", address: "ul. Kazimierza Wielkiego 20", x: 56, y: 68 },
-  { id: "GDA001", name: "GDA001", city: "Gdańsk", address: "ul. Długa 12", x: 48, y: 12 },
-  { id: "GDA002", name: "GDA002", city: "Gdańsk", address: "ul. Grunwaldzka 56", x: 52, y: 10 },
-  { id: "WRO001", name: "WRO001", city: "Wrocław", address: "ul. Świdnicka 30", x: 35, y: 55 },
-  { id: "POZ001", name: "POZ001", city: "Poznań", address: "ul. Półwiejska 40", x: 38, y: 35 },
-  { id: "LDZ001", name: "ŁDZ001", city: "Łódź", address: "ul. Piotrkowska 100", x: 52, y: 48 },
-  { id: "KAT001", name: "KAT001", city: "Katowice", address: "ul. 3 Maja 7", x: 50, y: 68 },
-  { id: "SLU001", name: "SLU001", city: "Słupsk", address: "ul. Wojska Polskiego 4", x: 42, y: 8 },
-  { id: "UST001", name: "UST001", city: "Ustka", address: "ul. Marynarki Polskiej 5", x: 40, y: 5 },
+  { id: "WAW001", city: "Warszawa", address: "ul. Marszałkowska 10", lat: 52.2297, lng: 21.0122 },
+  { id: "WAW002", city: "Warszawa", address: "ul. Puławska 45",      lat: 52.1959, lng: 21.0150 },
+  { id: "WAW003", city: "Warszawa", address: "al. Jerozolimskie 100",lat: 52.2255, lng: 21.0049 },
+  { id: "WAW004", city: "Warszawa", address: "ul. Prosta 70",        lat: 52.2340, lng: 20.9840 },
+  { id: "WAW005", city: "Warszawa", address: "ul. Wołoska 12",       lat: 52.1843, lng: 20.9994 },
+  { id: "KRK001", city: "Kraków",   address: "ul. Floriańska 8",     lat: 50.0647, lng: 19.9450 },
+  { id: "KRK002", city: "Kraków",   address: "ul. Kazimierza W. 20", lat: 50.0573, lng: 19.9437 },
+  { id: "KRK003", city: "Kraków",   address: "ul. Długa 1",          lat: 50.0680, lng: 19.9360 },
+  { id: "GDA001", city: "Gdańsk",   address: "ul. Długa 12",         lat: 54.3520, lng: 18.6466 },
+  { id: "GDA002", city: "Gdańsk",   address: "ul. Grunwaldzka 56",   lat: 54.3735, lng: 18.6180 },
+  { id: "GDA003", city: "Gdańsk",   address: "ul. Wita Stwosza 30",  lat: 54.3693, lng: 18.6205 },
+  { id: "WRO001", city: "Wrocław",  address: "ul. Świdnicka 30",     lat: 51.1079, lng: 17.0385 },
+  { id: "WRO002", city: "Wrocław",  address: "ul. Oławska 10",       lat: 51.1100, lng: 17.0345 },
+  { id: "POZ001", city: "Poznań",   address: "ul. Półwiejska 40",    lat: 52.4064, lng: 16.9252 },
+  { id: "POZ002", city: "Poznań",   address: "ul. Roosevelta 6",     lat: 52.4082, lng: 16.9336 },
+  { id: "LDZ001", city: "Łódź",     address: "ul. Piotrkowska 100",  lat: 51.7592, lng: 19.4560 },
+  { id: "LDZ002", city: "Łódź",     address: "ul. Kilińskiego 50",   lat: 51.7720, lng: 19.4660 },
+  { id: "KAT001", city: "Katowice", address: "ul. 3 Maja 7",         lat: 50.2649, lng: 19.0238 },
+  { id: "KAT002", city: "Katowice", address: "ul. Mariacka 1",       lat: 50.2580, lng: 19.0199 },
+  { id: "SZC001", city: "Szczecin", address: "ul. Wojska Polskiego 5",lat: 53.4285, lng: 14.5528 },
+  { id: "BIA001", city: "Białystok",address: "ul. Lipowa 20",        lat: 53.1325, lng: 23.1688 },
+  { id: "LUB001", city: "Lublin",   address: "ul. Krakowskie Przeds. 3",lat: 51.2465, lng: 22.5684 },
+  { id: "RZE001", city: "Rzeszów",  address: "ul. 3 Maja 12",        lat: 50.0412, lng: 21.9991 },
+  { id: "OLS001", city: "Olsztyn",  address: "ul. Staromiejska 1",   lat: 53.7784, lng: 20.4801 },
+  { id: "SLU001", city: "Słupsk",   address: "ul. Wojska Polskiego 4",lat: 54.4641, lng: 17.0286 },
+  { id: "UST001", city: "Ustka",    address: "ul. Marynarki Polskiej 5",lat: 54.5804, lng: 16.8619 },
+  { id: "GDY001", city: "Gdynia",   address: "ul. Świętojańska 30",  lat: 54.5189, lng: 18.5305 },
+  { id: "TOR001", city: "Toruń",    address: "ul. Szeroka 15",       lat: 53.0138, lng: 18.5984 },
+  { id: "BYD001", city: "Bydgoszcz",address: "ul. Dworcowa 50",      lat: 53.1235, lng: 18.0084 },
+  { id: "KIE001", city: "Kielce",   address: "ul. Sienkiewicza 25",  lat: 50.8661, lng: 20.6286 },
 ];
 
 let selectedPaczkomat = null;
-let mapInited = false;
+let leafletMap = null;
+let markers = [];
 
 function initMap() {
-  if (mapInited) return;
-  mapInited = true;
-  renderMapPins(PACZKOMATY);
+  if (leafletMap) return;
+
+  leafletMap = L.map("paczkomat-map").setView([52.0, 19.5], 6);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    maxZoom: 18
+  }).addTo(leafletMap);
+
+  const pinkIcon = L.divIcon({
+    className: "",
+    html: `<div style="background:#E8899F;width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -32]
+  });
+
+  PACZKOMATY.forEach(p => {
+    const marker = L.marker([p.lat, p.lng], { icon: pinkIcon }).addTo(leafletMap);
+    marker.bindPopup(`
+      <div class="popup-title">📦 ${p.id}</div>
+      <div class="popup-addr">${p.address}<br/>${p.city}</div>
+      <div class="popup-open">✅ Czynny 24/7</div>
+      <button class="popup-btn" onclick="selectPaczkomat('${p.id}')">Wybierz ten paczkomat</button>
+    `, { maxWidth: 220 });
+    markers.push({ id: p.id, marker });
+  });
 }
 
-function renderMapPins(list) {
-  const container = document.getElementById("map-pins");
-  // Etykiety miast
-  const cities = [...new Set(list.map(p => p.city))];
-  const cityLabels = cities.map(city => {
-    const p = list.find(x => x.city === city);
-    return `<span class="map-city-label" style="left:${p.x+2}%;top:${p.y-4}%">${city}</span>`;
-  }).join("");
+function searchPaczkomat() {
+  const query = document.getElementById("paczkomat-search").value.toLowerCase().trim();
+  if (!query) return;
 
-  const pins = list.map(p => `
-    <div class="map-pin ${selectedPaczkomat?.id === p.id ? 'selected' : ''}"
-         style="left:${p.x}%;top:${p.y}%"
-         onclick="showPaczkomatPopup('${p.id}', ${p.x}, ${p.y})"
-         title="${p.id} · ${p.address}">
-      <svg viewBox="0 0 24 28" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 0C7.03 0 3 4.03 3 9c0 6.75 9 19 9 19s9-12.25 9-19c0-4.97-4.03-9-9-9z" fill="${selectedPaczkomat?.id === p.id ? '#8B5E3C' : '#E8899F'}"/>
-        <circle cx="12" cy="9" r="4" fill="white"/>
-        <text x="12" y="13" text-anchor="middle" font-size="5" fill="${selectedPaczkomat?.id === p.id ? '#8B5E3C' : '#E8899F'}" font-weight="bold">P</text>
-      </svg>
-    </div>`).join("");
+  const found = PACZKOMATY.filter(p =>
+    p.city.toLowerCase().includes(query) ||
+    p.address.toLowerCase().includes(query) ||
+    p.id.toLowerCase().includes(query)
+  );
 
-  container.innerHTML = `
-    <div style="position:relative;width:100%;height:100%;background:linear-gradient(135deg,#e8e0d8,#d8d0c8);">
-      <!-- Mapa Polski - uproszczona -->
-      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;opacity:0.25;">
-        <path d="M30,5 L70,5 L75,10 L80,8 L85,15 L82,20 L78,22 L75,30 L80,35 L78,40 L72,45 L70,55 L65,60 L60,65 L55,70 L50,75 L45,72 L40,75 L35,72 L30,68 L25,65 L20,60 L18,55 L20,50 L15,45 L18,40 L15,35 L18,30 L22,25 L20,20 L22,15 L25,10 Z" fill="#c8b8a8" stroke="#b8a898" stroke-width="0.5"/>
-      </svg>
-      ${cityLabels}
-      ${pins}
-    </div>`;
-}
-
-function showPaczkomatPopup(id, x, y) {
-  const p = PACZKOMATY.find(p => p.id === id);
-  if (!p) return;
-  document.querySelectorAll(".map-popup").forEach(el => el.remove());
-
-  const left = x > 60 ? "auto" : `${x}%`;
-  const right = x > 60 ? `${100-x}%` : "auto";
-  const top = y > 60 ? `${y-35}%` : `${y}%`;
-
-  const popup = document.createElement("div");
-  popup.className = "map-popup";
-  popup.style.cssText = `left:${left};right:${right};top:${top};`;
-  popup.innerHTML = `
-    <button class="close-popup" onclick="this.closest('.map-popup').remove()">✕</button>
-    <h4>📦 ${p.id}</h4>
-    <p>${p.address}<br/>${p.city}</p>
-    <p style="color:#4A7A4A;font-size:0.75rem;">✅ Czynny 24/7</p>
-    <button onclick="selectPaczkomat('${p.id}')">Wybierz ten paczkomat</button>`;
-  document.getElementById("map-pins").appendChild(popup);
+  if (found.length > 0) {
+    leafletMap.setView([found[0].lat, found[0].lng], 13);
+    const m = markers.find(m => m.id === found[0].id);
+    if (m) m.marker.openPopup();
+  } else {
+    alert(`Nie znaleziono paczkomatów dla "${query}"`);
+  }
 }
 
 function selectPaczkomat(id) {
   const p = PACZKOMATY.find(p => p.id === id);
   if (!p) return;
   selectedPaczkomat = p;
-  document.querySelectorAll(".map-popup").forEach(el => el.remove());
+
+  leafletMap.closePopup();
 
   const display = document.getElementById("selected-paczkomat-display");
   display.classList.remove("hidden");
@@ -473,28 +467,14 @@ function selectPaczkomat(id) {
     </div>`;
 
   document.getElementById("paczkomat-map-wrapper").classList.add("hidden");
-  renderMapPins(PACZKOMATY);
+  renderSummary();
 }
 
 function changePaczkomat() {
   document.getElementById("paczkomat-map-wrapper").classList.remove("hidden");
   document.getElementById("selected-paczkomat-display").classList.add("hidden");
   selectedPaczkomat = null;
-  renderMapPins(PACZKOMATY);
-}
-
-function searchPaczkomat() {
-  const query = document.getElementById("paczkomat-search").value.toLowerCase().trim();
-  if (!query) { renderMapPins(PACZKOMATY); return; }
-  const filtered = PACZKOMATY.filter(p =>
-    p.city.toLowerCase().includes(query) ||
-    p.address.toLowerCase().includes(query) ||
-    p.id.toLowerCase().includes(query)
-  );
-  renderMapPins(filtered.length ? filtered : PACZKOMATY);
-  if (filtered.length === 0) {
-    document.getElementById("map-pins").innerHTML += `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.85rem;color:#888;">Nie znaleziono paczkomatów dla "${query}"</div>`;
-  }
+  setTimeout(() => leafletMap.invalidateSize(), 100);
 }
 
 function nextStep() {
