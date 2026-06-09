@@ -17,6 +17,7 @@
       <li><a href="#misie">Misie</a></li>
       <li><a href="#ubranka">Ubranka</a></li>
       <li><a href="#zestawy">Zestawy</a></li>
+      <li><a href="blog.html">Blog</a></li>
     </ul>
     <div class="nav-actions">
       <a href="cart.html" class="cart-btn">
@@ -39,43 +40,208 @@
   </div>
 </section>
 
+<!-- PASEK ZAUFANIA -->
+<section class="trust-bar">
+  <div class="trust-inner">
+    <div class="trust-item">
+      <div class="trust-icon">🔒</div>
+      <div class="trust-text">
+        <strong>Bezpieczna płatność</strong>
+        <span>Karta, BLIK, przelew</span>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">🚚</div>
+      <div class="trust-text">
+        <strong>Darmowa dostawa</strong>
+        <span>Od 119 zł zamówienia</span>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">↩️</div>
+      <div class="trust-text">
+        <strong>Łatwy zwrot</strong>
+        <span>14 dni bez podania przyczyny</span>
+      </div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">🤍</div>
+      <div class="trust-text">
+        <strong>Zadowolenie gwarantowane</strong>
+        <span>Zawsze po Twojej stronie</span>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- PRODUKTY -->
 <section class="products-section" id="produkty">
   <div class="section-header">
     <h2 class="section-title">Nasze produkty</h2>
     <div class="filters">
       <button class="filter-btn active" data-filter="all">Wszystkie</button>
-      <button class="filter-btn" data-filter="mis">Misie</button>
-      <button class="filter-btn" data-filter="ubranko">Ubranka</button>
-      <button class="filter-btn" data-filter="zestaw">Zestawy</button>
+      <button class="filter-btn" data-filter="mis" id="misie">Misie</button>
+      <button class="filter-btn" data-filter="ubranko" id="ubranka">Ubranka</button>
+      <button class="filter-btn" data-filter="zestaw" id="zestawy">Zestawy</button>
     </div>
   </div>
-  <div class="product-grid" id="product-grid">
-    <!-- Wypełniane przez JS -->
+  <div class="product-grid" id="product-grid"></div>
+</section>
+
+<!-- OPINIE -->
+<section class="reviews-section">
+  <div class="reviews-inner">
+    <h2 class="section-title" style="text-align:center;margin-bottom:0.4rem;">Co mówią klienci?</h2>
+    <p class="reviews-subtitle">Ponad 200 zadowolonych rodzin 🧸</p>
+    <div class="reviews-grid">
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">„Moja córeczka nie rozstaje się z misiem od tygodnia! Jest miękki, ładnie wykonany i sweterek nie sypie się w praniu. Polecam z całego serca."</p>
+        <div class="review-author">
+          <div class="review-avatar" style="background:#F2B8C6;">A</div>
+          <div>
+            <strong>Anna K.</strong>
+            <span>Mama 4-latki</span>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">„Kupiłam zestaw jako prezent urodzinowy — opakowanie i jakość na najwyższym poziomie. Dziecko było zachwycone, a ja zaoszczędziłam czas na szukanie prezentu!"</p>
+        <div class="review-author">
+          <div class="review-avatar" style="background:#C8DFF2;">M</div>
+          <div>
+            <strong>Marta W.</strong>
+            <span>Zadowolona mama</span>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">„Zamawiałam różowy zestaw dla siostry i dostałam go w 2 dni. Miś jest śliczny, materiał super miękki. Zdecydowanie wrócę po więcej ubranków!"</p>
+        <div class="review-author">
+          <div class="review-avatar" style="background:#D4F2C8;">K</div>
+          <div>
+            <strong>Kasia P.</strong>
+            <span>Stała klientka</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BLOG -->
+<section class="blog-section">
+  <div class="blog-inner">
+    <div class="blog-header">
+      <h2 class="section-title">Blog</h2>
+      <a href="blog.html" class="btn-outline">Zobacz więcej →</a>
+    </div>
+    <div class="blog-grid">
+      <a href="blog.html" class="blog-card">
+        <div class="blog-card-img">
+          <img src="img/blog-1.jpg" alt="Jak dbać o pluszaka" onerror="this.style.background='#F2D5DF'" />
+        </div>
+        <div class="blog-card-body">
+          <span class="blog-tag">Poradnik</span>
+          <h3>Jak prać i dbać o pluszowego misia?</h3>
+          <p>Kilka prostych zasad, które sprawią że Twój miś będzie miękki i czysty przez lata.</p>
+          <span class="blog-date">12 maja 2025</span>
+        </div>
+      </a>
+      <a href="blog.html" class="blog-card">
+        <div class="blog-card-img">
+          <img src="img/blog-2.jpg" alt="Prezent dla dziecka" onerror="this.style.background='#D5E8F2'" />
+        </div>
+        <div class="blog-card-body">
+          <span class="blog-tag">Inspiracje</span>
+          <h3>Idealny prezent dla dziecka — jak wybrać?</h3>
+          <p>Podpowiadamy co wziąć pod uwagę, żeby trafić w gust małego odbiorcy.</p>
+          <span class="blog-date">3 maja 2025</span>
+        </div>
+      </a>
+      <a href="blog.html" class="blog-card">
+        <div class="blog-card-img">
+          <img src="img/blog-3.jpg" alt="Zestawy prezentowe" onerror="this.style.background='#D5F2D8'" />
+        </div>
+        <div class="blog-card-body">
+          <span class="blog-tag">Nowości</span>
+          <h3>Zestawy TinyHugs — miś i ubranko w jednym</h3>
+          <p>Dowiedz się dlaczego nasz zestaw to najlepszy wybór na każdą okazję.</p>
+          <span class="blog-date">20 kwietnia 2025</span>
+        </div>
+      </a>
+    </div>
   </div>
 </section>
 
 <!-- FOOTER -->
-<footer>
-  <p>&copy; 2025 <strong>TinyHugs</strong> — Wszystkie prawa zastrzeżone</p>
+<footer class="footer-full">
+  <div class="footer-inner">
+    <div class="footer-col">
+      <div class="footer-logo">Tiny<span>Hugs</span></div>
+      <p class="footer-desc">Pluszowe misie i ubranka z miłością. Każdy miś szyty z dbałością o każdy szczegół.</p>
+      <div class="footer-social">
+        <a href="#" aria-label="Instagram">📸</a>
+        <a href="#" aria-label="TikTok">🎵</a>
+        <a href="#" aria-label="Facebook">👍</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Sklep</h4>
+      <ul>
+        <li><a href="index.html#misie">Misie</a></li>
+        <li><a href="index.html#ubranka">Ubranka</a></li>
+        <li><a href="index.html#zestawy">Zestawy</a></li>
+        <li><a href="blog.html">Blog</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Pomoc</h4>
+      <ul>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="dostawa.html">Dostawa i płatności</a></li>
+        <li><a href="zwroty.html">Zwroty i reklamacje</a></li>
+        <li><a href="kontakt.html">Kontakt</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Informacje</h4>
+      <ul>
+        <li><a href="regulamin.html">Regulamin</a></li>
+        <li><a href="polityka.html">Polityka prywatności</a></li>
+      </ul>
+      <div class="footer-newsletter">
+        <p>Zapisz się i dostań <strong>10% zniżki</strong> na pierwsze zamówienie!</p>
+        <div class="newsletter-form">
+          <input type="email" placeholder="Twój e-mail" />
+          <button>OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2025 <strong>TinyHugs</strong> — Wszystkie prawa zastrzeżone</span>
+    <div class="footer-payments">
+      <span class="pay-badge">VISA</span>
+      <span class="pay-badge">Mastercard</span>
+      <span class="pay-badge">BLIK</span>
+      <span class="pay-badge">Przelew</span>
+    </div>
+  </div>
 </footer>
 
 <!-- SKRYPTY -->
 <script src="products.js"></script>
 <script src="cart.js"></script>
 <script>
-  // === Renderowanie produktów ===
   function renderProducts(filter = "all") {
     const grid = document.getElementById("product-grid");
     const filtered = filter === "all" ? products : products.filter(p => p.category === filter);
 
     if (filtered.length === 0) {
-      grid.innerHTML = `
-        <div class="empty-state" style="grid-column:1/-1">
-          <div class="emoji">🧸</div>
-          <h3>Brak produktów</h3>
-          <p>W tej kategorii nie ma jeszcze produktów.</p>
-        </div>`;
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="emoji">🧸</div><h3>Brak produktów</h3><p>W tej kategorii nie ma jeszcze produktów.</p></div>`;
       return;
     }
 
@@ -97,16 +263,12 @@
           ${p.includes ? `<div class="product-card-includes">Zawiera: ${p.includes.join(" + ")}</div>` : ""}
           <div class="product-card-footer">
             <span class="product-card-price">${p.price} zł</span>
-            <button class="add-to-cart-btn" onclick="addToCart('${p.id}')">
-              + Dodaj
-            </button>
+            <button class="add-to-cart-btn" onclick="addToCart('${p.id}')">+ Dodaj</button>
           </div>
         </div>
-      </div>
-    `).join("");
+      </div>`).join("");
   }
 
-  // === Filtry ===
   document.querySelectorAll(".filter-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
@@ -115,13 +277,12 @@
     });
   });
 
-  // === Hash w URL np. #misie ===
   const hashMap = { "#misie": "mis", "#ubranka": "ubranko", "#zestawy": "zestaw" };
   const hash = window.location.hash;
   if (hashMap[hash]) {
     renderProducts(hashMap[hash]);
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
     document.querySelector(`[data-filter="${hashMap[hash]}"]`)?.classList.add("active");
-    document.querySelector(".filter-btn.active:not([data-filter])")?.classList.remove("active");
   } else {
     renderProducts();
   }
