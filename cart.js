@@ -1,99 +1,347 @@
-// =====================
-//  KOSZYK - cart.js
-// =====================
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Koszyk — TinyHugs</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* === KOSZYK === */
+    .cart-page {
+      max-width: 900px;
+      margin: 2.5rem auto;
+      padding: 0 2rem 4rem;
+    }
 
-const CART_KEY = "tinyhugs_cart";
+    .cart-page h1 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      color: var(--text);
+      margin-bottom: 2rem;
+    }
 
-// Pobierz koszyk z localStorage
-function getCart() {
-  const raw = localStorage.getItem(CART_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
+    .cart-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 2rem;
+      align-items: start;
+    }
 
-// Zapisz koszyk do localStorage
-function saveCart(cart) {
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  updateCartIcon();
-}
+    /* === LISTA PRODUKTÓW === */
+    .cart-items {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
 
-// Dodaj produkt do koszyka
-function addToCart(productId, quantity = 1) {
-  const cart = getCart();
-  const product = getProductById(productId);
-  if (!product) return;
+    .cart-item {
+      background: var(--warm-white);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      display: flex;
+      gap: 1.2rem;
+      align-items: center;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
 
-  const existing = cart.find(item => item.id === productId);
-  if (existing) {
-    existing.quantity += quantity;
-  } else {
-    cart.push({ id: productId, quantity });
-  }
+    .cart-item-img {
+      width: 90px;
+      height: 90px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--cream);
+      flex-shrink: 0;
+    }
 
-  saveCart(cart);
-  showCartToast(product.name + " " + product.variant);
-}
+    .cart-item-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
 
-// Usuń produkt z koszyka
-function removeFromCart(productId) {
-  const cart = getCart().filter(item => item.id !== productId);
-  saveCart(cart);
-}
+    .cart-item-info {
+      flex: 1;
+    }
 
-// Zmień ilość produktu
-function updateQuantity(productId, quantity) {
-  const cart = getCart();
-  const item = cart.find(i => i.id === productId);
-  if (item) {
-    if (quantity <= 0) {
-      removeFromCart(productId);
+    .cart-item-name {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .cart-item-variant {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .cart-item-price {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--brown);
+      margin-top: 0.4rem;
+    }
+
+    .cart-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+    }
+
+    .qty-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--cream);
+      border: 1.5px solid var(--border);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--brown);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .qty-btn:hover { background: var(--blush); border-color: var(--blush-dark); }
+
+    .qty-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .remove-btn {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 0.3rem 0.7rem;
+      border-radius: 50px;
+      border: 1.5px solid var(--border);
+      transition: all 0.2s;
+    }
+
+    .remove-btn:hover {
+      background: #fff0f0;
+      border-color: #e88;
+      color: #c44;
+    }
+
+    /* === PODSUMOWANIE === */
+    .cart-summary {
+      background: var(--warm-white);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px var(--shadow);
+      position: sticky;
+      top: 90px;
+    }
+
+    .cart-summary h2 {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .summary-row.total {
+      border-top: 1.5px solid var(--border);
+      padding-top: 0.8rem;
+      margin-top: 0.8rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .summary-row.total span:last-child {
+      color: var(--brown);
+    }
+
+    .checkout-btn {
+      display: block;
+      width: 100%;
+      background: var(--brown);
+      color: #fff;
+      padding: 0.9rem;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 1.2rem;
+      transition: background 0.2s, transform 0.15s;
+    }
+
+    .checkout-btn:hover {
+      background: var(--blush-dark);
+      transform: translateY(-2px);
+    }
+
+    .continue-btn {
+      display: block;
+      text-align: center;
+      margin-top: 0.8rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+
+    .continue-btn:hover { color: var(--brown); }
+
+    /* === PUSTY KOSZYK === */
+    .empty-cart {
+      text-align: center;
+      padding: 5rem 2rem;
+    }
+
+    .empty-cart .emoji { font-size: 4rem; margin-bottom: 1rem; }
+
+    .empty-cart h2 {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-cart p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    /* === RESPONSYWNOŚĆ === */
+    @media (max-width: 768px) {
+      .cart-page { padding: 0 1rem 3rem; }
+
+      .cart-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .cart-summary { position: static; }
+    }
+  </style>
+</head>
+<body data-page="cart">
+
+<div id="nav-placeholder"></div>
+<!-- KOSZYK -->
+<main class="cart-page">
+  <h1>🧸 Twój koszyk</h1>
+  <div id="cart-root"></div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <p>&copy; 2025 <strong>TinyHugs</strong> — Wszystkie prawa zastrzeżone</p>
+</footer>
+
+<script src="i18n.js"></script>
+<script src="nav.js"></script>
+<script src="products.js"></script>
+<script src="cart.js"></script>
+<script>
+  function renderCart() {
+    const root = document.getElementById("cart-root");
+    const cart = getCart();
+
+    if (cart.length === 0) {
+      root.innerHTML = `
+        <div class="empty-cart">
+          <div class="emoji">🛒</div>
+          <h2>Koszyk jest pusty</h2>
+          <p>Dodaj misie lub ubranka, żeby zacząć zakupy.</p>
+          <a href="index.html" class="btn-primary">🐻 Wróć do sklepu</a>
+        </div>`;
       return;
     }
-    item.quantity = quantity;
-    saveCart(cart);
+
+    const total = getCartTotal();
+    const count = getCartCount();
+    const shipping = total >= 119 ? 0 : 14.99;
+    const grandTotal = total + shipping;
+
+    const itemsHTML = cart.map(item => {
+      const p = getProductById(item.id);
+      if (!p) return "";
+      return `
+        <div class="cart-item" id="item-${p.id}">
+          <div class="cart-item-img">
+            <img src="${p.image}" alt="${p.name} ${p.variant}" onerror="this.src='img/placeholder.jpg'"/>
+          </div>
+          <div class="cart-item-info">
+            <div class="cart-item-name">${p.name}</div>
+            <div class="cart-item-variant">
+              <span class="color-dot" style="background:${p.color}"></span>
+              ${p.variant}
+            </div>
+            <div class="cart-item-price">${p.price} zł / szt.</div>
+            <div class="cart-item-actions">
+              <button class="qty-btn" onclick="changeQty('${p.id}', -1)">−</button>
+              <span class="qty-value" id="qty-${p.id}">${item.quantity}</span>
+              <button class="qty-btn" onclick="changeQty('${p.id}', 1)">+</button>
+              <button class="remove-btn" onclick="removeItem('${p.id}')">Usuń</button>
+            </div>
+          </div>
+          <div style="font-weight:700;color:var(--brown);font-size:1.05rem;flex-shrink:0;">
+            ${p.price * item.quantity} zł
+          </div>
+        </div>`;
+    }).join("");
+
+    root.innerHTML = `
+      <div class="cart-layout">
+        <div class="cart-items">${itemsHTML}</div>
+        <div class="cart-summary">
+          <h2>Podsumowanie</h2>
+          <div class="summary-row">
+            <span>Produkty (${count} szt.)</span>
+            <span>${total.toFixed(2)} zł</span>
+          </div>
+          <div class="summary-row">
+            <span>Dostawa</span>
+            <span>${shipping === 0 ? '<span style="color:#4A7A4A">Darmowa 🎉</span>' : shipping.toFixed(2) + " zł"}</span>
+          </div>
+          ${shipping > 0 ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.5rem;">Brakuje ${(119 - total).toFixed(2)} zł do darmowej dostawy (PL)</div>` : ""}
+          <div class="summary-row total">
+            <span>Razem</span>
+            <span>${grandTotal.toFixed(2)} zł</span>
+          </div>
+          <a href="checkout.html" class="checkout-btn">Przejdź do kasy →</a>
+          <a href="index.html" class="continue-btn">← Kontynuuj zakupy</a>
+        </div>
+      </div>`;
   }
-}
 
-// Wyczyść koszyk
-function clearCart() {
-  localStorage.removeItem(CART_KEY);
-  updateCartIcon();
-}
-
-// Policz łączną liczbę produktów
-function getCartCount() {
-  return getCart().reduce((sum, item) => sum + item.quantity, 0);
-}
-
-// Policz łączną cenę
-function getCartTotal() {
-  return getCart().reduce((sum, item) => {
-    const product = getProductById(item.id);
-    return sum + (product ? product.price * item.quantity : 0);
-  }, 0);
-}
-
-// Aktualizuj ikonę koszyka w nawigacji
-function updateCartIcon() {
-  const badge = document.getElementById("cart-badge");
-  if (!badge) return;
-  const count = getCartCount();
-  badge.textContent = count;
-  badge.style.display = count > 0 ? "flex" : "none";
-}
-
-// Toast powiadomienie po dodaniu do koszyka
-function showCartToast(name) {
-  let toast = document.getElementById("cart-toast");
-  if (!toast) {
-    toast = document.createElement("div");
-    toast.id = "cart-toast";
-    document.body.appendChild(toast);
+  function changeQty(id, delta) {
+    const cart = getCart();
+    const item = cart.find(i => i.id === id);
+    if (!item) return;
+    const newQty = item.quantity + delta;
+    if (newQty <= 0) {
+      removeItem(id);
+    } else {
+      updateQuantity(id, newQty);
+      renderNav("cart");
+  renderCart();
+    }
   }
-  toast.textContent = `🧸 ${name} dodano do koszyka!`;
-  toast.classList.add("show");
-  clearTimeout(toast._timeout);
-  toast._timeout = setTimeout(() => toast.classList.remove("show"), 2500);
-}
 
-// Inicjalizacja przy załadowaniu strony
-document.addEventListener("DOMContentLoaded", updateCartIcon);
+  function removeItem(id) {
+    removeFromCart(id);
+    renderNav("cart");
+  renderCart();
+  }
+
+  renderNav("cart");
+  renderCart();
+</script>
+</body>
+</html>
