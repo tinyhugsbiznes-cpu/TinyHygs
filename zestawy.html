@@ -105,31 +105,36 @@
 <script src="products.js"></script>
 <script src="cart.js"></script>
 <script>
-  const grid = document.getElementById("product-grid");
-  const count = document.getElementById("product-count");
-  const filtered = products.filter(p => p.category === "zestaw");
-  count.textContent = filtered.length + " produkty";
+  function renderProducts() {
+    const grid = document.getElementById("product-grid");
+    const count = document.getElementById("product-count");
+    if (!grid) return;
+    const filtered = products.filter(p => p.category === "zestaw");
+    if (count) count.textContent = filtered.length + " produkty";
 
-  grid.innerHTML = filtered.map(p => `
-    <div class="product-card">
-      <div class="product-card-img">
-        <img src="${p.image}" alt="${p.name} ${p.variant}" onerror="this.src='img/placeholder.jpg'"/>
-        <span class="product-card-badge badge-zestaw">Zestaw</span>
-      </div>
-      <div class="product-card-body">
-        <div class="product-card-name">${p.name}</div>
-        <div class="product-card-variant">
-          <span class="color-dot" style="background:${p.color}"></span>${p.variant}
+    grid.innerHTML = filtered.map(p => `
+      <div class="product-card">
+        <div class="product-card-img">
+          <img src="${p.image}" alt="${p.name} ${p.variant}" onerror="this.src='img/placeholder.jpg'"/>
+          <span class="product-card-badge badge-zestaw">${t("set")}</span>
         </div>
-        <div class="product-card-includes">Zawiera: ${p.includes.join(" + ")}</div>
-        <div class="product-card-footer">
-          <span class="product-card-price">${p.price} zł</span>
-          <button class="add-to-cart-btn" onclick="addToCart('${p.id}')">+ Dodaj</button>
+        <div class="product-card-body">
+          <div class="product-card-name">${p.name}</div>
+          <div class="product-card-variant">
+            <span class="color-dot" style="background:${p.color}"></span>${p.variant}
+          </div>
+          ${p.includes ? `<div class="product-card-includes">${p.includes.join(" + ")}</div>` : ""}
+          <div class="product-card-footer">
+            <span class="product-card-price">${formatPrice(p.price)}</span>
+            <button class="add-to-cart-btn" onclick="addToCart('${p.id}')">${t("add")}</button>
+          </div>
         </div>
-      </div>
-    </div>`).join("");
+      </div>`).join("");
+  }
 
-renderNav("zestawy");
+  document.addEventListener("DOMContentLoaded", () => {
+    renderProducts();
+    renderNav("zestawy");
+  });
 </script>
 </body>
-</html>
