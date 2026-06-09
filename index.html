@@ -7,16 +7,15 @@
   <meta name="description" content="TinyHugs — ręcznie szyte pluszaki i ubranka. Misie Tiny w trzech kolorach, zestawy prezentowe." />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body data-page="index">
 
 <div id="nav-placeholder"></div>
-
 <!-- HERO -->
 <section class="hero">
   <div class="hero-text">
-    <h1>Małe misie,<br/><em>wielkie uściski</em></h1>
-    <p>Pluszowe misie Tiny — miękkie, starannie wykonane, gotowe do przytulania. Dobierz swój kolor i ubranko.</p>
-    <a href="#produkty" class="btn-primary">🐻 Zobacz misie</a>
+    <h1 id="hero-title">Małe misie,</h1><em id="hero-em" style="font-family:var(--font-display);font-size:clamp(2.2rem,4vw,3.2rem);color:var(--blush-dark);font-style:normal;">wielkie uściski</em>
+    <p id="hero-desc">Pluszowe misie Tiny — miękkie, starannie wykonane, gotowe do przytulania. Dobierz swój kolor i ubranko.</p>
+    <a href="#produkty" class="btn-primary" id="hero-btn">🐻 Zobacz misie</a>
   </div>
   <div class="hero-img">
     <img src="img/mis-hero.jpg" alt="Misie Tiny w swetrach — brązowy, biały i różowy" />
@@ -29,29 +28,29 @@
     <div class="trust-item">
       <div class="trust-icon">🔒</div>
       <div class="trust-text">
-        <strong>Bezpieczna płatność</strong>
-        <span>Karta, BLIK, przelew</span>
+        <strong id="trust-pay">Bezpieczna płatność</strong>
+        <span id="trust-pay-sub">Karta, BLIK, przelew</span>
       </div>
     </div>
     <div class="trust-item">
       <div class="trust-icon">🚚</div>
       <div class="trust-text">
-        <strong>Darmowa dostawa</strong>
-        <span>Od 119 zł zamówienia</span>
+        <strong id="trust-ship">Darmowa dostawa</strong>
+        <span id="trust-ship-sub">Od 119 zł zamówienia</span>
       </div>
     </div>
     <div class="trust-item">
       <div class="trust-icon">↩️</div>
       <div class="trust-text">
-        <strong>Łatwy zwrot</strong>
-        <span>14 dni bez podania przyczyny</span>
+        <strong id="trust-return">Łatwy zwrot</strong>
+        <span id="trust-return-sub">14 dni bez podania przyczyny</span>
       </div>
     </div>
     <div class="trust-item">
       <div class="trust-icon">🤍</div>
       <div class="trust-text">
-        <strong>Zadowolenie gwarantowane</strong>
-        <span>Zawsze po Twojej stronie</span>
+        <strong id="trust-care">Zadowolenie gwarantowane</strong>
+        <span id="trust-care-sub">Zawsze po Twojej stronie</span>
       </div>
     </div>
   </div>
@@ -60,7 +59,7 @@
 <!-- PRODUKTY -->
 <section class="products-section" id="produkty">
   <div class="section-header">
-    <h2 class="section-title">Nasze produkty</h2>
+    <h2 class="section-title" id="section-products">Nasze produkty</h2>
     <div class="filters">
       <button class="filter-btn active" data-filter="all">Wszystkie</button>
       <button class="filter-btn" data-filter="mis" id="misie">Misie</button>
@@ -74,8 +73,8 @@
 <!-- OPINIE -->
 <section class="reviews-section">
   <div class="reviews-inner">
-    <h2 class="section-title" style="text-align:center;margin-bottom:0.4rem;">Co mówią klienci?</h2>
-    <p class="reviews-subtitle">Ponad 200 zadowolonych rodzin 🧸</p>
+    <h2 class="section-title" id="reviews-title" style="text-align:center;margin-bottom:0.4rem;">Co mówią klienci?</h2>
+    <p class="reviews-subtitle" id="reviews-sub">Ponad 200 zadowolonych rodzin 🧸</p>
     <div class="reviews-grid">
       <div class="review-card">
         <div class="review-stars">★★★★★</div>
@@ -118,8 +117,8 @@
 <section class="blog-section">
   <div class="blog-inner">
     <div class="blog-header">
-      <h2 class="section-title">Blog</h2>
-      <a href="blog.html" class="btn-outline">Zobacz więcej →</a>
+      <h2 class="section-title" id="blog-title">Blog</h2>
+      <a href="blog.html" class="btn-outline" id="blog-more">Zobacz więcej →</a>
     </div>
     <div class="blog-grid">
       <a href="blog.html" class="blog-card">
