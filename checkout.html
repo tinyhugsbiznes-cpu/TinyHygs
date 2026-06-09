@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zamówienie — TinyHugs</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .checkout-page { max-width: 1000px; margin: 2.5rem auto; padding: 0 2rem 4rem; }
+    .checkout-page h1 { font-family: var(--font-display); font-size: 2rem; margin-bottom: 2rem; }
+
+    .checkout-layout { display: grid; grid-template-columns: 1fr 320px; gap: 2rem; align-items: start; }
+
+    /* KROKI */
+    .steps { display: flex; gap: 0; margin-bottom: 2rem; }
+    .step { flex: 1; display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--text-muted); }
+    .step-num { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+    .step.active .step-num { background: var(--brown); border-color: var(--brown); color: #fff; }
+    .step.active { color: var(--text); font-weight: 600; }
+    .step.done .step-num { background: #4A7A4A; border-color: #4A7A4A; color: #fff; }
+    .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 0.3rem; }
+
+    /* SEKCJE FORMULARZA */
+    .form-section { background: var(--warm-white); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 2px 10px var(--shadow); }
+    .form-section h2 { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .form-row.full { grid-template-columns: 1fr; }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    .form-group label { font-size: 0.82rem; font-weight: 500; color: var(--text-muted); }
+    .form-group input, .form-group select {
+      padding: 0.65rem 0.9rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-family: var(--font-body);
+      color: var(--text);
+      background: var(--cream);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--brown); background: #fff; }
+
+    /* KRAJ */
+    .country-note { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem; }
+    .free-ship-note { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: #4A7A4A; font-weight: 600; margin-top: 0.4rem; }
+
+    /* METODY DOSTAWY */
+    .shipping-methods { display: flex; flex-direction: column; gap: 0.7rem; }
+    .shipping-method {
+      display: flex; align-items: center; gap: 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.9rem 1rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .shipping-method:hover { border-color: var(--brown-light); }
+    .shipping-method.selected { border-color: var(--brown); background: #FDF5EE; }
+    .shipping-method input[type=radio] { accent-color: var(--brown); width: 18px; height: 18px; flex-shrink: 0; }
+    .shipping-logo { font-size: 1.4rem; flex-shrink: 0; }
+    .shipping-info { flex: 1; }
+    .shipping-name { font-weight: 600; font-size: 0.9rem; }
+    .shipping-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.1rem; }
+    .shipping-price { font-weight: 700; font-size: 0.95rem; color: var(--brown); white-space: nowrap; }
+
+    /* MAPA PACZKOMATÓW */
+    .paczkomat-section { margin-top: 1rem; }
+    .paczkomat-search { display: flex; gap: 0.5rem; margin-bottom: 0.8rem; }
+    .paczkomat-search input { flex: 1; padding: 0.6rem 0.9rem; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 0.88rem; font-family: var(--font-body); outline: none; }
+    .paczkomat-search input:focus { border-color: var(--brown); }
+    .paczkomat-search button { background: var(--brown); color: #fff; padding: 0.6rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+    .paczkomat-search button:hover { background: var(--blush-dark); }
+
+    #paczkomat-map {
+      width: 100%; height: 320px; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border); overflow: hidden;
+      background: #e8e0d8;
+      position: relative;
+    }
+
+    .map-pins { position: absolute; inset: 0; }
+    .map-city-label { position: absolute; font-size: 0.7rem; color: #555; font-weight: 600; }
+    .map-pin {
+      position: absolute; width: 28px; height: 28px; transform: translate(-50%,-100%);
+      cursor: pointer; transition: transform 0.15s;
+    }
+    .map-pin:hover { transform: translate(-50%,-100%) scale(1.2); }
+    .map-pin svg { width: 28px; height: 28px; }
+    .map-pin.selected svg path:first-child { fill: var(--brown); }
+
+    .map-popup {
+      position: absolute; background: #fff; border-radius: 10px;
+      padding: 0.8rem 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      font-size: 0.8rem; min-width: 200px; z-index: 10;
+      border: 1.5px solid var(--border);
+    }
+    .map-popup h4 { font-weight: 700; margin-bottom: 0.3rem; color: var(--text); }
+    .map-popup p { color: var(--text-muted); margin-bottom: 0.5rem; line-height: 1.4; }
+    .map-popup button { background: var(--brown); color: #fff; padding: 0.4rem 0.9rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; }
+    .map-popup button:hover { background: var(--blush-dark); }
+    .map-popup .close-popup { position: absolute; top: 6px; right: 8px; background: none; color: var(--text-muted); font-size: 1rem; }
+
+    .selected-paczkomat {
+      display: flex; align-items: center; gap: 0.7rem;
+      background: #F0FFF0; border: 1.5px solid #B8E0BA;
+      border-radius: var(--radius-sm); padding: 0.7rem 1rem;
+      margin-top: 0.7rem; font-size: 0.85rem;
+    }
+    .selected-paczkomat strong { color: #2E6B30; }
+    .selected-paczkomat .change-btn { margin-left: auto; font-size: 0.78rem; color: var(--text-muted); text-decoration: underline; cursor: pointer; background: none; border: none; }
+
+    /* PODSUMOWANIE */
+    .order-summary { background: var(--warm-white); border-radius: var(--radius); padding: 1.5rem; box-shadow: 0 2px 10px var(--shadow); position: sticky; top: 90px; }
+    .order-summary h2 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 1.2rem; }
+    .order-item { display: flex; gap: 0.8rem; align-items: center; margin-bottom: 0.8rem; }
+    .order-item-img { width: 50px; height: 50px; border-radius: 8px; overflow: hidden; background: var(--cream); flex-shrink: 0; }
+    .order-item-img img { width: 100%; height: 100%; object-fit: cover; }
+    .order-item-name { font-size: 0.85rem; font-weight: 600; }
+    .order-item-variant { font-size: 0.78rem; color: var(--text-muted); }
+    .order-item-price { margin-left: auto; font-size: 0.9rem; font-weight: 700; color: var(--brown); white-space: nowrap; }
+    .order-divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+    .order-row { display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .order-row.total { font-size: 1.05rem; font-weight: 700; color: var(--text); padding-top: 0.5rem; border-top: 1.5px solid var(--border); margin-top: 0.5rem; }
+    .order-row.total span:last-child { color: var(--brown); }
+
+    .place-order-btn { display: block; width: 100%; background: var(--brown); color: #fff; padding: 1rem; border-radius: 50px; font-size: 1rem; font-weight: 700; text-align: center; margin-top: 1.2rem; transition: background 0.2s; border: none; cursor: pointer; }
+    .place-order-btn:hover { background: var(--blush-dark); }
+    .secure-badge { text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.6rem; }
+
+    /* HIDDEN */
+    .hidden { display: none !important; }
+
+    @media (max-width: 768px) {
+      .checkout-page { padding: 0 1rem 3rem; }
+      .checkout-layout { grid-template-columns: 1fr; }
+      .order-summary { position: static; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div id="nav-placeholder"></div>
+
+<main class="checkout-page">
+  <h1>📦 Zamówienie</h1>
+
+  <!-- KROKI -->
+  <div class="steps">
+    <div class="step active" id="step1"><span class="step-num">1</span> Dane</div>
+    <div class="step-line"></div>
+    <div class="step" id="step2"><span class="step-num">2</span> Dostawa</div>
+    <div class="step-line"></div>
+    <div class="step" id="step3"><span class="step-num">3</span> Płatność</div>
+  </div>
+
+  <div class="checkout-layout">
+    <div class="checkout-form">
+
+      <!-- KROK 1: DANE -->
+      <div id="section-data">
+        <div class="form-section">
+          <h2>👤 Dane osobowe</h2>
+          <div class="form-row">
+            <div class="form-group"><label>Imię</label><input type="text" id="fname" placeholder="Jan"/></div>
+            <div class="form-group"><label>Nazwisko</label><input type="text" id="lname" placeholder="Kowalski"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>E-mail</label><input type="email" id="email" placeholder="jan@email.com"/></div>
+            <div class="form-group"><label>Telefon</label><input type="tel" id="phone" placeholder="+48 000 000 000"/></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h2>🌍 Kraj wysyłki</h2>
+          <div class="form-row full">
+            <div class="form-group">
+              <label>Wybierz kraj</label>
+              <select id="country" onchange="onCountryChange()">
+                <option value="">— Wybierz kraj —</option>
+                <option value="PL">🇵🇱 Polska</option>
+                <option value="DE">🇩🇪 Niemcy</option>
+                <option value="FR">🇫🇷 Francja</option>
+                <option value="GB">🇬🇧 Wielka Brytania</option>
+                <option value="CZ">🇨🇿 Czechy</option>
+                <option value="SK">🇸🇰 Słowacja</option>
+                <option value="AT">🇦🇹 Austria</option>
+                <option value="NL">🇳🇱 Holandia</option>
+                <option value="BE">🇧🇪 Belgia</option>
+                <option value="IT">🇮🇹 Włochy</option>
+                <option value="ES">🇪🇸 Hiszpania</option>
+                <option value="SE">🇸🇪 Szwecja</option>
+                <option value="NO">🇳🇴 Norwegia</option>
+                <option value="DK">🇩🇰 Dania</option>
+                <option value="FI">🇫🇮 Finlandia</option>
+                <option value="HU">🇭🇺 Węgry</option>
+                <option value="RO">🇷🇴 Rumunia</option>
+                <option value="UA">🇺🇦 Ukraina</option>
+                <option value="OTHER">🌍 Inne</option>
+              </select>
+              <span class="country-note" id="country-note"></span>
+            </div>
+          </div>
+          <!-- Adres (dla Polski) -->
+          <div id="address-pl" class="hidden">
+            <div class="form-row">
+              <div class="form-group" style="grid-column:1/-1"><label>Ulica i numer</label><input type="text" id="street" placeholder="ul. Kwiatowa 5/3"/></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Kod pocztowy</label><input type="text" id="zip" placeholder="00-000"/></div>
+              <div class="form-group"><label>Miasto</label><input type="text" id="city" placeholder="Warszawa"/></div>
+            </div>
+          </div>
+          <!-- Adres (zagranica) -->
+          <div id="address-intl" class="hidden">
+            <div class="form-row full">
+              <div class="form-group"><label>Pełny adres</label><input type="text" id="address-full" placeholder="Street, City, ZIP, Country"/></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metoda dostawy (tylko Polska) -->
+        <div class="form-section" id="shipping-section" style="display:none;">
+          <h2>🚚 Metoda dostawy</h2>
+          <div class="shipping-methods" id="shipping-methods"></div>
+          <!-- MAPA PACZKOMATÓW -->
+          <div class="paczkomat-section hidden" id="paczkomat-section">
+            <div id="selected-paczkomat-display" class="hidden"></div>
+            <div id="paczkomat-map-wrapper">
+              <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.6rem;">Wpisz miasto lub kod pocztowy, aby znaleźć paczkomat:</p>
+              <div class="paczkomat-search">
+                <input type="text" id="paczkomat-search" placeholder="np. Warszawa, Kraków, 30-001..."/>
+                <button onclick="searchPaczkomat()">Szukaj</button>
+              </div>
+              <div id="paczkomat-map">
+                <div class="map-pins" id="map-pins"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-primary" style="margin-top:1rem;width:100%;justify-content:center;padding:0.9rem;" onclick="nextStep()">
+          Dalej →
+        </button>
+      </div>
+
+    </div>
+
+    <!-- PODSUMOWANIE ZAMÓWIENIA -->
+    <div class="order-summary" id="order-summary">
+      <h2>Twoje zamówienie</h2>
+      <div id="order-items"></div>
+      <hr class="order-divider"/>
+      <div class="order-row"><span>Produkty</span><span id="sum-products">—</span></div>
+      <div class="order-row"><span>Dostawa</span><span id="sum-shipping">—</span></div>
+      <div class="order-row total"><span>Razem</span><span id="sum-total">—</span></div>
+      <div class="secure-badge">🔒 Bezpieczna płatność · SSL</div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer-full">
+  <div class="footer-bottom" style="max-width:1000px;margin:0 auto;padding:1.2rem 2rem;">
+    <span>&copy; 2025 <strong>TinyHugs</strong></span>
+    <div class="footer-payments">
+      <span class="pay-badge">VISA</span>
+      <span class="pay-badge">Mastercard</span>
+      <span class="pay-badge">BLIK</span>
+      <span class="pay-badge">Przelew</span>
+    </div>
+  </div>
+</footer>
+
+<script src="products.js"></script>
+<script src="i18n.js"></script>
+<script src="cart.js"></script>
+<script src="nav.js"></script>
+<script>
+renderNav("");
+
+// === PODSUMOWANIE ===
+function renderSummary() {
+  const cart = getCart();
+  const itemsEl = document.getElementById("order-items");
+  const total = getCartTotal();
+  const country = document.getElementById("country")?.value || "";
+  const selectedShipping = document.querySelector(".shipping-method.selected");
+  const shippingCost = selectedShipping ? parseFloat(selectedShipping.dataset.cost) : (country === "PL" ? 0 : getIntlShipping(country));
+  const freeShipping = country === "PL" && total >= 119;
+  const actualShipping = freeShipping ? 0 : shippingCost;
+
+  itemsEl.innerHTML = cart.map(item => {
+    const p = getProductById(item.id);
+    if (!p) return "";
+    return `<div class="order-item">
+      <div class="order-item-img"><img src="${p.image}" onerror="this.src='img/placeholder.jpg'"/></div>
+      <div><div class="order-item-name">${p.name} ${p.variant}</div><div class="order-item-variant">x${item.quantity}</div></div>
+      <div class="order-item-price">${formatPrice(p.price * item.quantity)}</div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("sum-products").textContent = formatPrice(total);
+  document.getElementById("sum-shipping").textContent = actualShipping === 0 ? "Darmowa 🎉" : formatPrice(actualShipping);
+  document.getElementById("sum-total").textContent = formatPrice(total + actualShipping);
+}
+
+function getIntlShipping(country) {
+  const eu = ["DE","FR","GB","CZ","SK","AT","NL","BE","IT","ES","SE","NO","DK","FI","HU","RO"];
+  if (eu.includes(country)) return 35;
+  return 55;
+}
+
+// === ZMIANA KRAJU ===
+function onCountryChange() {
+  const country = document.getElementById("country").value;
+  const note = document.getElementById("country-note");
+  const shippingSection = document.getElementById("shipping-section");
+  const addrPl = document.getElementById("address-pl");
+  const addrIntl = document.getElementById("address-intl");
+
+  addrPl.classList.add("hidden");
+  addrIntl.classList.add("hidden");
+
+  if (!country) { shippingSection.style.display = "none"; note.textContent = ""; renderSummary(); return; }
+
+  if (country === "PL") {
+    addrPl.classList.remove("hidden");
+    note.innerHTML = `<span class="free-ship-note">✅ Darmowa dostawa od 119 zł!</span>`;
+    shippingSection.style.display = "block";
+    renderShippingPL();
+  } else {
+    addrIntl.classList.remove("hidden");
+    const cost = getIntlShipping(country);
+    note.textContent = `Dostawa zagraniczna: ${formatPrice(cost)}`;
+    shippingSection.style.display = "none";
+  }
+  renderSummary();
+}
+
+// === METODY DOSTAWY PL ===
+const shippingOptions = [
+  { id: "inpost-paczkomat", logo: "📦", name: "InPost Paczkomat", desc: "Odbiór w paczkomacie · 1-2 dni robocze", cost: 12.99, hasPaczkomat: true },
+  { id: "inpost-kurier",    logo: "🟡", name: "InPost Kurier",    desc: "Dostawa pod drzwi · 1-2 dni robocze",  cost: 14.99 },
+  { id: "dpd",              logo: "🔴", name: "DPD Kurier",       desc: "Dostawa pod drzwi · 1-3 dni robocze",  cost: 15.99 },
+  { id: "dhl",              logo: "🟡", name: "DHL Kurier",       desc: "Dostawa pod drzwi · 1-2 dni robocze",  cost: 16.99 },
+];
+
+function renderShippingPL() {
+  const container = document.getElementById("shipping-methods");
+  const total = getCartTotal();
+  container.innerHTML = shippingOptions.map(opt => {
+    const free = total >= 119;
+    const priceLabel = free ? '<span style="color:#4A7A4A;font-weight:700;">Darmowa 🎉</span>' : `${opt.cost.toFixed(2)} zł`;
+    return `<label class="shipping-method" data-id="${opt.id}" data-cost="${opt.cost}" onclick="selectShipping(this, ${opt.hasPaczkomat||false})">
+      <input type="radio" name="shipping" value="${opt.id}"/>
+      <span class="shipping-logo">${opt.logo}</span>
+      <div class="shipping-info">
+        <div class="shipping-name">${opt.name}</div>
+        <div class="shipping-desc">${opt.desc}</div>
+      </div>
+      <span class="shipping-price">${priceLabel}</span>
+    </label>`;
+  }).join("");
+}
+
+function selectShipping(el, hasPaczkomat) {
+  document.querySelectorAll(".shipping-method").forEach(m => m.classList.remove("selected"));
+  el.classList.add("selected");
+  el.querySelector("input").checked = true;
+  const paczkomatSection = document.getElementById("paczkomat-section");
+  if (hasPaczkomat) {
+    paczkomatSection.classList.remove("hidden");
+    initMap();
+  } else {
+    paczkomatSection.classList.add("hidden");
+  }
+  renderSummary();
+}
+
+// === MAPA PACZKOMATÓW ===
+const PACZKOMATY = [
+  { id: "WAW001", name: "WAW001", city: "Warszawa", address: "ul. Marszałkowska 10", x: 52, y: 38 },
+  { id: "WAW002", name: "WAW002", city: "Warszawa", address: "ul. Puławska 45", x: 55, y: 45 },
+  { id: "WAW003", name: "WAW003", city: "Warszawa", address: "al. Jerozolimskie 100", x: 48, y: 40 },
+  { id: "KRK001", name: "KRK001", city: "Kraków", address: "ul. Floriańska 8", x: 52, y: 65 },
+  { id: "KRK002", name: "KRK002", city: "Kraków", address: "ul. Kazimierza Wielkiego 20", x: 56, y: 68 },
+  { id: "GDA001", name: "GDA001", city: "Gdańsk", address: "ul. Długa 12", x: 48, y: 12 },
+  { id: "GDA002", name: "GDA002", city: "Gdańsk", address: "ul. Grunwaldzka 56", x: 52, y: 10 },
+  { id: "WRO001", name: "WRO001", city: "Wrocław", address: "ul. Świdnicka 30", x: 35, y: 55 },
+  { id: "POZ001", name: "POZ001", city: "Poznań", address: "ul. Półwiejska 40", x: 38, y: 35 },
+  { id: "LDZ001", name: "ŁDZ001", city: "Łódź", address: "ul. Piotrkowska 100", x: 52, y: 48 },
+  { id: "KAT001", name: "KAT001", city: "Katowice", address: "ul. 3 Maja 7", x: 50, y: 68 },
+  { id: "SLU001", name: "SLU001", city: "Słupsk", address: "ul. Wojska Polskiego 4", x: 42, y: 8 },
+  { id: "UST001", name: "UST001", city: "Ustka", address: "ul. Marynarki Polskiej 5", x: 40, y: 5 },
+];
+
+let selectedPaczkomat = null;
+let mapInited = false;
+
+function initMap() {
+  if (mapInited) return;
+  mapInited = true;
+  renderMapPins(PACZKOMATY);
+}
+
+function renderMapPins(list) {
+  const container = document.getElementById("map-pins");
+  // Etykiety miast
+  const cities = [...new Set(list.map(p => p.city))];
+  const cityLabels = cities.map(city => {
+    const p = list.find(x => x.city === city);
+    return `<span class="map-city-label" style="left:${p.x+2}%;top:${p.y-4}%">${city}</span>`;
+  }).join("");
+
+  const pins = list.map(p => `
+    <div class="map-pin ${selectedPaczkomat?.id === p.id ? 'selected' : ''}"
+         style="left:${p.x}%;top:${p.y}%"
+         onclick="showPaczkomatPopup('${p.id}', ${p.x}, ${p.y})"
+         title="${p.id} · ${p.address}">
+      <svg viewBox="0 0 24 28" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 0C7.03 0 3 4.03 3 9c0 6.75 9 19 9 19s9-12.25 9-19c0-4.97-4.03-9-9-9z" fill="${selectedPaczkomat?.id === p.id ? '#8B5E3C' : '#E8899F'}"/>
+        <circle cx="12" cy="9" r="4" fill="white"/>
+        <text x="12" y="13" text-anchor="middle" font-size="5" fill="${selectedPaczkomat?.id === p.id ? '#8B5E3C' : '#E8899F'}" font-weight="bold">P</text>
+      </svg>
+    </div>`).join("");
+
+  container.innerHTML = `
+    <div style="position:relative;width:100%;height:100%;background:linear-gradient(135deg,#e8e0d8,#d8d0c8);">
+      <!-- Mapa Polski - uproszczona -->
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;opacity:0.25;">
+        <path d="M30,5 L70,5 L75,10 L80,8 L85,15 L82,20 L78,22 L75,30 L80,35 L78,40 L72,45 L70,55 L65,60 L60,65 L55,70 L50,75 L45,72 L40,75 L35,72 L30,68 L25,65 L20,60 L18,55 L20,50 L15,45 L18,40 L15,35 L18,30 L22,25 L20,20 L22,15 L25,10 Z" fill="#c8b8a8" stroke="#b8a898" stroke-width="0.5"/>
+      </svg>
+      ${cityLabels}
+      ${pins}
+    </div>`;
+}
+
+function showPaczkomatPopup(id, x, y) {
+  const p = PACZKOMATY.find(p => p.id === id);
+  if (!p) return;
+  document.querySelectorAll(".map-popup").forEach(el => el.remove());
+
+  const left = x > 60 ? "auto" : `${x}%`;
+  const right = x > 60 ? `${100-x}%` : "auto";
+  const top = y > 60 ? `${y-35}%` : `${y}%`;
+
+  const popup = document.createElement("div");
+  popup.className = "map-popup";
+  popup.style.cssText = `left:${left};right:${right};top:${top};`;
+  popup.innerHTML = `
+    <button class="close-popup" onclick="this.closest('.map-popup').remove()">✕</button>
+    <h4>📦 ${p.id}</h4>
+    <p>${p.address}<br/>${p.city}</p>
+    <p style="color:#4A7A4A;font-size:0.75rem;">✅ Czynny 24/7</p>
+    <button onclick="selectPaczkomat('${p.id}')">Wybierz ten paczkomat</button>`;
+  document.getElementById("map-pins").appendChild(popup);
+}
+
+function selectPaczkomat(id) {
+  const p = PACZKOMATY.find(p => p.id === id);
+  if (!p) return;
+  selectedPaczkomat = p;
+  document.querySelectorAll(".map-popup").forEach(el => el.remove());
+
+  const display = document.getElementById("selected-paczkomat-display");
+  display.classList.remove("hidden");
+  display.innerHTML = `
+    <div class="selected-paczkomat">
+      <span>📦</span>
+      <div><strong>${p.id}</strong> · ${p.address}, ${p.city}</div>
+      <button class="change-btn" onclick="changePaczkomat()">Zmień</button>
+    </div>`;
+
+  document.getElementById("paczkomat-map-wrapper").classList.add("hidden");
+  renderMapPins(PACZKOMATY);
+}
+
+function changePaczkomat() {
+  document.getElementById("paczkomat-map-wrapper").classList.remove("hidden");
+  document.getElementById("selected-paczkomat-display").classList.add("hidden");
+  selectedPaczkomat = null;
+  renderMapPins(PACZKOMATY);
+}
+
+function searchPaczkomat() {
+  const query = document.getElementById("paczkomat-search").value.toLowerCase().trim();
+  if (!query) { renderMapPins(PACZKOMATY); return; }
+  const filtered = PACZKOMATY.filter(p =>
+    p.city.toLowerCase().includes(query) ||
+    p.address.toLowerCase().includes(query) ||
+    p.id.toLowerCase().includes(query)
+  );
+  renderMapPins(filtered.length ? filtered : PACZKOMATY);
+  if (filtered.length === 0) {
+    document.getElementById("map-pins").innerHTML += `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.85rem;color:#888;">Nie znaleziono paczkomatów dla "${query}"</div>`;
+  }
+}
+
+function nextStep() {
+  const fname = document.getElementById("fname").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const country = document.getElementById("country").value;
+  if (!fname || !email || !country) {
+    alert("Wypełnij wszystkie wymagane pola (imię, e-mail, kraj).");
+    return;
+  }
+  if (country === "PL") {
+    const shipping = document.querySelector(".shipping-method.selected");
+    if (!shipping) { alert("Wybierz metodę dostawy."); return; }
+    if (shipping.dataset.id === "inpost-paczkomat" && !selectedPaczkomat) {
+      alert("Wybierz paczkomat z mapy."); return;
+    }
+  }
+  alert("✅ Dane zapisane! Następny krok: płatność Stripe (wkrótce).");
+}
+
+// Inicjalizacja
+renderSummary();
+updateCartIcon();
+</script>
+</body>
+</html>
