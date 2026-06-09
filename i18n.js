@@ -224,3 +224,67 @@ function applyTranslations() {
 document.addEventListener("DOMContentLoaded", () => {
   applyTranslations();
 });
+
+// === PEŁNA AKTUALIZACJA STRONY PO ZMIANIE JĘZYKA ===
+// Nadpisuje setLang żeby przeładować cały widok
+const _origSetLang = setLang;
+window.setLang = function(code) {
+  if (!TRANSLATIONS[code]) return;
+  currentLang = code;
+  localStorage.setItem("th_lang", code);
+
+  // Zamknij dropdown
+  document.getElementById("lang-dropdown")?.classList.remove("open");
+  document.getElementById("lang-selector")?.classList.remove("open");
+
+  // Przeładuj nawigację
+  const activePage = document.body.dataset.page || "";
+  if (typeof renderNav === "function") renderNav(activePage);
+
+  // Przeładuj produkty jeśli są
+  if (typeof renderProducts === "function") renderProducts();
+  if (typeof renderCart === "function") renderCart();
+
+  // Aktualizuj data-i18n
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+
+  // Aktualizuj ceny
+  document.querySelectorAll("[data-price]").forEach(el => {
+    el.textContent = formatPrice(parseFloat(el.dataset.price));
+  });
+
+  // Aktualizuj sekcje statyczne przez id
+  _refreshStaticSections();
+};
+
+function _refreshStaticSections() {
+  const map = {
+    "trust-pay":        t("trust_pay"),
+    "trust-pay-sub":    t("trust_pay_sub"),
+    "trust-ship":       t("trust_ship"),
+    "trust-ship-sub":   t("trust_ship_sub"),
+    "trust-return":     t("trust_return"),
+    "trust-return-sub": t("trust_return_sub"),
+    "trust-care":       t("trust_care"),
+    "trust-care-sub":   t("trust_care_sub"),
+    "hero-title":       t("hero_title"),
+    "hero-em":          t("hero_em"),
+    "hero-desc":        t("hero_desc"),
+    "hero-btn":         t("hero_btn"),
+    "section-products": t("products"),
+    "reviews-title":    t("reviews_title"),
+    "reviews-sub":      t("reviews_sub"),
+    "blog-title":       t("blog_title"),
+    "blog-more":        t("blog_more"),
+    "savings-text":     t("savings"),
+  };
+  for (const [id, text] of Object.entries(map)) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+  // Darmowa wysyłka threshold
+  const fst = document.getElementById("free-shipping-threshold");
+  if (fst) fst.textContent = formatPrice(119);
+}
