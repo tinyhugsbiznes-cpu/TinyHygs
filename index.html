@@ -285,9 +285,7 @@
     // Event delegation dla przycisków "Dodaj" - działa nawet po re-renderze
     document.getElementById("product-grid").addEventListener("click", (e) => {
       const btn = e.target.closest("[data-add-id]");
-      if (btn) {
-        addToCart(btn.dataset.addId);
-      }
+      if (btn) window.addToCart(btn.dataset.addId);
     });
   });
 
@@ -336,12 +334,32 @@
     }, 580);
   }
 
+
+
+  // Po renderProducts dodaj reveal do kart
+  const _origRender = renderProducts;
+  window.renderProducts = function(filter) {
+    _origRender(filter);
+    addRevealToCards();
+  };
+
+
   // Nadpisz addToCart żeby dodawał animację
-  const _origAddToCart = addToCart;
   window.addToCart = function(id) {
-    _origAddToCart(id);
+    // Wywołaj oryginalny z cart.js
+    if (typeof getCart === "function") {
+      const cart = getCart();
+      const existing = cart.find(i => i.id === id);
+      if (existing) existing.quantity++;
+      else cart.push({ id, quantity: 1 });
+      localStorage.setItem("tinyhugs_cart", JSON.stringify(cart));
+      updateCartIcon();
+      // Toast
+      const p = getProductById(id);
+      if (p) showCartToast(p.name + " " + p.variant);
+    }
     // Animacja przycisku
-    const btn = document.querySelector(`[data-add-id="${id}"]`);
+    const btn = document.querySelector('[data-add-id="' + id + '"]');
     if (btn) {
       flyToCart(btn);
       btn.textContent = "✓ Dodano";
@@ -351,13 +369,6 @@
         btn.classList.remove("added");
       }, 1500);
     }
-  };
-
-  // Po renderProducts dodaj reveal do kart
-  const _origRender = renderProducts;
-  window.renderProducts = function(filter) {
-    _origRender(filter);
-    addRevealToCards();
   };
 
   // Nadpisz setLang żeby też aktualizował filtry i produkty
