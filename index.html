@@ -22,8 +22,24 @@
   </div>
 </section>
 
+
+<!-- PRODUKTY -->
+<section class="products-section reveal" id="produkty">
+  <div class="section-header">
+    <h2 class="section-title" id="section-products">Nasze produkty</h2>
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">Wszystkie</button>
+      <button class="filter-btn" data-filter="mis" id="misie">Misie</button>
+      <button class="filter-btn" data-filter="ubranko" id="ubranka">Ubranka</button>
+      <button class="filter-btn" data-filter="zestaw" id="zestawy">Zestawy</button>
+    </div>
+  </div>
+  <div class="product-grid" id="product-grid"></div>
+</section>
+
+<!-- OPINIE -->
 <!-- PASEK ZAUFANIA -->
-<section class="trust-bar">
+<section class="trust-bar reveal">
   <div class="trust-inner">
     <div class="trust-item">
       <div class="trust-icon">🔒</div>
@@ -55,23 +71,7 @@
     </div>
   </div>
 </section>
-
-<!-- PRODUKTY -->
-<section class="products-section" id="produkty">
-  <div class="section-header">
-    <h2 class="section-title" id="section-products">Nasze produkty</h2>
-    <div class="filters">
-      <button class="filter-btn active" data-filter="all">Wszystkie</button>
-      <button class="filter-btn" data-filter="mis" id="misie">Misie</button>
-      <button class="filter-btn" data-filter="ubranko" id="ubranka">Ubranka</button>
-      <button class="filter-btn" data-filter="zestaw" id="zestawy">Zestawy</button>
-    </div>
-  </div>
-  <div class="product-grid" id="product-grid"></div>
-</section>
-
-<!-- OPINIE -->
-<section class="reviews-section">
+<section class="reviews-section reveal">
   <div class="reviews-inner">
     <h2 class="section-title" id="reviews-title" style="text-align:center;margin-bottom:0.4rem;">Co mówią klienci?</h2>
     <p class="reviews-subtitle" id="reviews-sub">Ponad 200 zadowolonych rodzin 🧸</p>
@@ -114,7 +114,7 @@
 </section>
 
 <!-- BLOG -->
-<section class="blog-section">
+<section class="blog-section reveal">
   <div class="blog-inner">
     <div class="blog-header">
       <h2 class="section-title" id="blog-title">Blog</h2>
@@ -290,6 +290,75 @@
       }
     });
   });
+
+
+  // === SCROLL REVEAL ===
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+
+  // Karty produktów - reveal z opóźnieniem
+  function addRevealToCards() {
+    document.querySelectorAll(".product-card").forEach((card, i) => {
+      card.classList.add("reveal");
+      card.style.transitionDelay = (i * 0.07) + "s";
+      setTimeout(() => observer.observe(card), 50);
+    });
+  }
+
+  // === FLY TO CART ANIMATION ===
+  function flyToCart(btn) {
+    const cartBtn = document.querySelector(".cart-btn");
+    if (!cartBtn) return;
+
+    const btnRect  = btn.getBoundingClientRect();
+    const cartRect = cartBtn.getBoundingClientRect();
+
+    const fly = document.createElement("div");
+    fly.className = "fly-item";
+    fly.textContent = "🧸";
+    fly.style.left = (btnRect.left + btnRect.width/2 - 20) + "px";
+    fly.style.top  = (btnRect.top  + btnRect.height/2 - 20) + "px";
+
+    const dx = cartRect.left + cartRect.width/2  - (btnRect.left + btnRect.width/2);
+    const dy = cartRect.top  + cartRect.height/2 - (btnRect.top  + btnRect.height/2);
+    fly.style.setProperty("--fly-x", dx + "px");
+    fly.style.setProperty("--fly-y", dy + "px");
+
+    document.body.appendChild(fly);
+
+    // Bounce na ikonie koszyka
+    setTimeout(() => {
+      cartBtn.classList.add("bounce");
+      setTimeout(() => cartBtn.classList.remove("bounce"), 500);
+      fly.remove();
+    }, 580);
+  }
+
+  // Nadpisz addToCart żeby dodawał animację
+  const _origAddToCart = addToCart;
+  window.addToCart = function(id) {
+    _origAddToCart(id);
+    // Animacja przycisku
+    const btn = document.querySelector(`[data-add-id="${id}"]`);
+    if (btn) {
+      flyToCart(btn);
+      btn.textContent = "✓ Dodano";
+      btn.classList.add("added");
+      setTimeout(() => {
+        btn.textContent = t("add");
+        btn.classList.remove("added");
+      }, 1500);
+    }
+  };
+
+  // Po renderProducts dodaj reveal do kart
+  const _origRender = renderProducts;
+  window.renderProducts = function(filter) {
+    _origRender(filter);
+    addRevealToCards();
+  };
 
   // Nadpisz setLang żeby też aktualizował filtry i produkty
   const _origSetLangIndex = window.setLang;
