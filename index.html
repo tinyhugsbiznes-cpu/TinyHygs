@@ -285,7 +285,18 @@
     // Event delegation dla przycisków "Dodaj" - działa nawet po re-renderze
     document.getElementById("product-grid").addEventListener("click", (e) => {
       const btn = e.target.closest("[data-add-id]");
-      if (btn) window.addToCart(btn.dataset.addId);
+      if (!btn) return;
+      // Wywołaj oryginalny addToCart z cart.js
+      addToCart(btn.dataset.addId);
+      // Efekt wizualny
+      flyToCart(btn);
+      const origText = btn.textContent;
+      btn.textContent = "✓ Dodano";
+      btn.classList.add("added");
+      setTimeout(() => {
+        btn.textContent = origText;
+        btn.classList.remove("added");
+      }, 1500);
     });
   });
 
@@ -342,36 +353,7 @@
     _origRender(filter);
     addRevealToCards();
   };
-
-
-  // Nadpisz addToCart żeby dodawał animację
-  window.addToCart = function(id) {
-    // Wywołaj oryginalny z cart.js
-    if (typeof getCart === "function") {
-      const cart = getCart();
-      const existing = cart.find(i => i.id === id);
-      if (existing) existing.quantity++;
-      else cart.push({ id, quantity: 1 });
-      localStorage.setItem("tinyhugs_cart", JSON.stringify(cart));
-      updateCartIcon();
-      // Toast
-      const p = getProductById(id);
-      if (p) showCartToast(p.name + " " + p.variant);
-    }
-    // Animacja przycisku
-    const btn = document.querySelector('[data-add-id="' + id + '"]');
-    if (btn) {
-      flyToCart(btn);
-      btn.textContent = "✓ Dodano";
-      btn.classList.add("added");
-      setTimeout(() => {
-        btn.textContent = t("add");
-        btn.classList.remove("added");
-      }, 1500);
-    }
-  };
-
-  // Nadpisz setLang żeby też aktualizował filtry i produkty
+// Nadpisz setLang żeby też aktualizował filtry i produkty
   const _origSetLangIndex = window.setLang;
   window.setLang = function(code) {
     _origSetLangIndex(code);
