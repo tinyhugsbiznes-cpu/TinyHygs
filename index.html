@@ -220,149 +220,128 @@
 <script src="products.js"></script>
 <script src="cart.js"></script>
 <script>
-  function renderProducts(filter) {
-    if (filter === undefined) {
-      // Zachowaj aktywny filtr
-      const activeBtn = document.querySelector(".filter-btn.active");
-      filter = activeBtn ? activeBtn.dataset.filter : "all";
-    }
+// === ANIMACJA FLY TO CART ===
+function flyToCart(btn) {
+  const cartBtn = document.querySelector(".cart-btn");
+  if (!cartBtn) return;
+  const bR = btn.getBoundingClientRect();
+  const cR = cartBtn.getBoundingClientRect();
+  const fly = document.createElement("div");
+  fly.className = "fly-item";
+  fly.textContent = "🧸";
+  fly.style.cssText = `position:fixed;width:36px;height:36px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;font-size:1.1rem;pointer-events:none;z-index:9999;
+    left:${bR.left + bR.width/2 - 18}px;top:${bR.top + bR.height/2 - 18}px;
+    transition:all 0.55s cubic-bezier(.4,0,.2,1);opacity:1;transform:scale(1);`;
+  document.body.appendChild(fly);
+  requestAnimationFrame(() => {
+    fly.style.left = (cR.left + cR.width/2 - 18) + "px";
+    fly.style.top  = (cR.top  + cR.height/2 - 18) + "px";
+    fly.style.transform = "scale(0.2)";
+    fly.style.opacity = "0";
+  });
+  setTimeout(() => {
+    fly.remove();
+    cartBtn.style.animation = "none";
+    cartBtn.offsetHeight;
+    cartBtn.style.animation = "cartBounce 0.4s ease";
+    setTimeout(() => cartBtn.style.animation = "", 400);
+  }, 560);
+}
 
-    const grid = document.getElementById("product-grid");
-    if (!grid) return;
-    const filtered = filter === "all" ? products : products.filter(p => p.category === filter);
+// === RENDER PRODUKTÓW ===
+function renderProducts(filter) {
+  const activeBtn = document.querySelector(".filter-btn.active");
+  if (filter === undefined) filter = activeBtn ? activeBtn.dataset.filter : "all";
 
-    const badgeLabels = { mis: t("bear"), ubranko: t("clothes"), zestaw: t("set") };
-    const badgeClasses = { mis: "badge-mis", ubranko: "badge-ubranko", zestaw: "badge-zestaw" };
+  const grid = document.getElementById("product-grid");
+  if (!grid) return;
 
-    if (filtered.length === 0) {
-      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="emoji">🧸</div><h3>${t("cart_empty")}</h3></div>`;
-      return;
-    }
+  const filtered = filter === "all" ? products : products.filter(p => p.category === filter);
+  const badgeLabels  = { mis: t("bear"), ubranko: t("clothes"), zestaw: t("set") };
+  const badgeClasses = { mis: "badge-mis", ubranko: "badge-ubranko", zestaw: "badge-zestaw" };
 
-    grid.innerHTML = filtered.map(p => `
-      <div class="product-card" data-category="${p.category}">
-        <div class="product-card-img">
-          <img src="${p.image}" alt="${p.name} ${p.variant}" onerror="this.src='img/placeholder.jpg'"/>
-          <span class="product-card-badge ${badgeClasses[p.category]}">${badgeLabels[p.category]}</span>
-        </div>
-        <div class="product-card-body">
-          <div class="product-card-name">${p.name}</div>
-          <div class="product-card-variant">
-            <span class="color-dot" style="background:${p.color}"></span>${p.variant}
-          </div>
-          ${p.includes ? `<div class="product-card-includes">${p.includes.join(" + ")}</div>` : ""}
-          <div class="product-card-footer">
-            <span class="product-card-price">${formatPrice(p.price)}</span>
-            <button class="add-to-cart-btn" data-add-id="${p.id}">${t("add")}</button>
-          </div>
-        </div>
-      </div>`).join("");
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="emoji">🧸</div><h3>Brak produktów</h3></div>`;
+    return;
   }
 
+  grid.innerHTML = filtered.map(p => `
+    <div class="product-card" data-category="${p.category}">
+      <div class="product-card-img">
+        <img src="${p.image}" alt="${p.name} ${p.variant}" onerror="this.src='img/placeholder.jpg'"/>
+        <span class="product-card-badge ${badgeClasses[p.category]}">${badgeLabels[p.category]}</span>
+      </div>
+      <div class="product-card-body">
+        <div class="product-card-name">${p.name}</div>
+        <div class="product-card-variant">
+          <span class="color-dot" style="background:${p.color}"></span>${p.variant}
+        </div>
+        ${p.includes ? `<div class="product-card-includes">${p.includes.join(" + ")}</div>` : ""}
+        <div class="product-card-footer">
+          <span class="product-card-price">${formatPrice(p.price)}</span>
+          <button class="add-to-cart-btn" data-add-id="${p.id}">${t("add")}</button>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+// === INIT ===
+document.addEventListener("DOMContentLoaded", () => {
+
   // Filtry
-  document.addEventListener("DOMContentLoaded", () => {
-    // Aktualizuj tekst filtrów
-    function updateFilterLabels() {
-      const map = { all: t("all"), mis: t("nav_bears"), ubranko: t("nav_clothes"), zestaw: t("nav_sets") };
-      document.querySelectorAll(".filter-btn").forEach(btn => {
-        const key = btn.dataset.filter;
-        if (map[key]) btn.textContent = map[key];
-      });
-    }
-
-    document.querySelectorAll(".filter-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        renderProducts(btn.dataset.filter);
-      });
-    });
-
-    updateFilterLabels();
-    renderProducts("all");
-    renderNav("index");
-
-    // Event delegation dla przycisków "Dodaj" - działa nawet po re-renderze
-    document.getElementById("product-grid").addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-add-id]");
-      if (!btn) return;
-      // Wywołaj oryginalny addToCart z cart.js
-      addToCart(btn.dataset.addId);
-      // Efekt wizualny
-      flyToCart(btn);
-      const origText = btn.textContent;
-      btn.textContent = "✓ Dodano";
-      btn.classList.add("added");
-      setTimeout(() => {
-        btn.textContent = origText;
-        btn.classList.remove("added");
-      }, 1500);
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderProducts(btn.dataset.filter);
     });
   });
 
+  renderProducts("all");
+  renderNav("index");
 
-  // === SCROLL REVEAL ===
-  const observer = new IntersectionObserver((entries) => {
+  // === KOSZYK - event delegation ===
+  document.getElementById("product-grid").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-add-id]");
+    if (!btn) return;
+
+    // Dodaj do koszyka przez cart.js
+    addToCart(btn.dataset.addId);
+
+    // Animacja
+    flyToCart(btn);
+    const orig = btn.textContent;
+    btn.textContent = "✓ Dodano";
+    btn.classList.add("added");
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove("added"); }, 1400);
+  });
+
+  // Scroll reveal
+  const io = new IntersectionObserver(entries => {
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); });
-  }, { threshold: 0.1 });
-  document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+  }, { threshold: 0.08 });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+  document.querySelectorAll(".product-card").forEach((c, i) => {
+    c.style.transitionDelay = (i * 0.06) + "s";
+    c.classList.add("reveal");
+    io.observe(c);
+  });
 
-  // Karty produktów - reveal z opóźnieniem
-  function addRevealToCards() {
-    document.querySelectorAll(".product-card").forEach((card, i) => {
-      card.classList.add("reveal");
-      card.style.transitionDelay = (i * 0.07) + "s";
-      setTimeout(() => observer.observe(card), 50);
-    });
-  }
+  // Filtry — etykiety
+  const filterMap = { all: t("all"), mis: t("nav_bears"), ubranko: t("nav_clothes"), zestaw: t("nav_sets") };
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    if (filterMap[btn.dataset.filter]) btn.textContent = filterMap[btn.dataset.filter];
+  });
+});
 
-  // === FLY TO CART ANIMATION ===
-  function flyToCart(btn) {
-    const cartBtn = document.querySelector(".cart-btn");
-    if (!cartBtn) return;
-
-    const btnRect  = btn.getBoundingClientRect();
-    const cartRect = cartBtn.getBoundingClientRect();
-
-    const fly = document.createElement("div");
-    fly.className = "fly-item";
-    fly.textContent = "🧸";
-    fly.style.left = (btnRect.left + btnRect.width/2 - 20) + "px";
-    fly.style.top  = (btnRect.top  + btnRect.height/2 - 20) + "px";
-
-    const dx = cartRect.left + cartRect.width/2  - (btnRect.left + btnRect.width/2);
-    const dy = cartRect.top  + cartRect.height/2 - (btnRect.top  + btnRect.height/2);
-    fly.style.setProperty("--fly-x", dx + "px");
-    fly.style.setProperty("--fly-y", dy + "px");
-
-    document.body.appendChild(fly);
-
-    // Bounce na ikonie koszyka
-    setTimeout(() => {
-      cartBtn.classList.add("bounce");
-      setTimeout(() => cartBtn.classList.remove("bounce"), 500);
-      fly.remove();
-    }, 580);
-  }
-
-
-
-  // Po renderProducts dodaj reveal do kart
-  const _origRender = renderProducts;
-  window.renderProducts = function(filter) {
-    _origRender(filter);
-    addRevealToCards();
-  };
-// Nadpisz setLang żeby też aktualizował filtry i produkty
-  const _origSetLangIndex = window.setLang;
-  window.setLang = function(code) {
-    _origSetLangIndex(code);
-    // Aktualizuj etykiety filtrów
-    const map = { all: t("all"), mis: t("nav_bears"), ubranko: t("nav_clothes"), zestaw: t("nav_sets") };
-    document.querySelectorAll(".filter-btn").forEach(btn => {
-      const key = btn.dataset.filter;
-      if (map[key]) btn.textContent = map[key];
-    });
-  };
+// setLang — aktualizuj stronę przy zmianie języka
+const _sl = window.setLang;
+window.setLang = function(code) {
+  _sl(code);
+  const fm = { all: t("all"), mis: t("nav_bears"), ubranko: t("nav_clothes"), zestaw: t("nav_sets") };
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    if (fm[btn.dataset.filter]) btn.textContent = fm[btn.dataset.filter];
+  });
+};
 </script>
 </body>
