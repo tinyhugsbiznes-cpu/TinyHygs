@@ -62,7 +62,7 @@ function renderCart() {
     return `
       <div class="cart-item" style="animation-delay:${idx * 0.07}s">
         <div class="cart-item-img">
-          <img src="${p.image}" alt="${p.name}" onerror="this.src='img/placeholder.jpg'"/>
+          <img src="${p.image}" alt="${p.name}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'200\' height=\'200\'%3E%3Crect width=\'200\' height=\'200\' fill=\'%23F2D5DF\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-size=\'40\'%3E🧸%3C/text%3E%3C/svg%3E'"/>
         </div>
         <div class="cart-item-info">
           <div class="cart-item-name">${p.name}</div>
