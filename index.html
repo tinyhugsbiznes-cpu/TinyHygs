@@ -220,6 +220,34 @@
 <script src="products.js"></script>
 <script src="cart.js"></script>
 <script>
+// === KOSZYK — bezpieczna wersja addToCart ===
+// Działa nawet jeśli cart.js jeszcze się nie załadował
+function addToCart(id) {
+  const KEY = "tinyhugs_cart";
+  const cart = JSON.parse(localStorage.getItem(KEY) || "[]");
+  const item = cart.find(i => i.id === id);
+  if (item) item.quantity++;
+  else cart.push({ id, quantity: 1 });
+  localStorage.setItem(KEY, JSON.stringify(cart));
+  // Aktualizuj badge
+  const badge = document.getElementById("cart-badge");
+  if (badge) {
+    const count = cart.reduce((s, i) => s + i.quantity, 0);
+    badge.textContent = count;
+    badge.style.display = count > 0 ? "flex" : "none";
+  }
+  // Toast
+  const p = (typeof getProductById === "function") ? getProductById(id) : null;
+  if (p) {
+    let toast = document.getElementById("cart-toast");
+    if (!toast) { toast = document.createElement("div"); toast.id = "cart-toast"; document.body.appendChild(toast); }
+    toast.textContent = "🧸 " + p.name + " " + p.variant + " dodano!";
+    toast.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove("show"), 2500);
+  }
+}
+
 // === ANIMACJA FLY TO CART ===
 function flyToCart(btn) {
   const cartBtn = document.querySelector(".cart-btn");
