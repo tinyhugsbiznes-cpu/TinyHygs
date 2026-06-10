@@ -101,46 +101,46 @@
 <script src="products.js"></script>
 <script src="cart.js"></script>
 <script>
-  function renderProducts() {
-    const grid = document.getElementById("product-grid");
-    const count = document.getElementById("product-count");
-    if (!grid) return;
-    const filtered = products.filter(p => p.category === "ubranko");
-    if (count) count.textContent = filtered.length + " produkty";
+function renderProducts() {
+  const grid = document.getElementById("product-grid");
+  const countEl = document.getElementById("product-count");
+  if (!grid) return;
+  const filtered = products.filter(p => p.category === "ubranko");
+  if (countEl) countEl.textContent = filtered.length + " produkty";
 
-    grid.innerHTML = filtered.map(p => `
-      <div class="product-card">
-        <div class="product-card-img">
-          <img src="${p.image}" alt="${p.name} ${p.variant}" onerror="this.src='img/placeholder.jpg'"/>
-          <span class="product-card-badge badge-ubranko">${t("clothes")}</span>
+  grid.innerHTML = filtered.map(p => `
+    <div class="product-card">
+      <div class="product-card-img">
+        <img src="${p.image}" alt="${p.name} ${p.variant}" onerror="this.src='img/placeholder.jpg'"/>
+        <span class="product-card-badge badge-ubranko">${t("clothes")}</span>
+      </div>
+      <div class="product-card-body">
+        <div class="product-card-name">${p.name}</div>
+        <div class="product-card-variant">
+          <span class="color-dot" style="background:${p.color}"></span>${p.variant}
         </div>
-        <div class="product-card-body">
-          <div class="product-card-name">${p.name}</div>
-          <div class="product-card-variant">
-            <span class="color-dot" style="background:${p.color}"></span>${p.variant}
-          </div>
-          ${p.includes ? `<div class="product-card-includes">${p.includes.join(" + ")}</div>` : ""}
-          <div class="product-card-footer">
-            <span class="product-card-price">${formatPrice(p.price)}</span>
-            <button class="add-to-cart-btn" data-add-id="${p.id}">${t("add")}</button>
-          </div>
+        ${p.includes ? `<div class="product-card-includes">${p.includes.join(" + ")}</div>` : ""}
+        <div class="product-card-footer">
+          <span class="product-card-price">${formatPrice(p.price)}</span>
+          <button class="add-to-cart-btn" data-add-id="${p.id}">${t("add")}</button>
         </div>
-      </div>`).join("");
-  }
+      </div>
+    </div>`).join("");
+}
 
-  document.addEventListener("DOMContentLoaded", () => {
-    renderProducts();
-    renderNav("ubranka");
-// Event delegation
-    document.getElementById("product-grid").addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-add-id]");
-      if (!btn) return;
-      addToCart(btn.dataset.addId);
-      const origText = btn.textContent;
-      btn.textContent = "✓ Dodano";
-      btn.classList.add("added");
-      setTimeout(() => { btn.textContent = origText; btn.classList.remove("added"); }, 1500);
-    });
+document.addEventListener("DOMContentLoaded", () => {
+  renderProducts();
+  renderNav("ubranka");
+
+  document.getElementById("product-grid").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-add-id]");
+    if (!btn) return;
+    addToCart(btn.dataset.addId);
+    const orig = btn.textContent;
+    btn.textContent = "✓ Dodano";
+    btn.classList.add("added");
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove("added"); }, 1400);
   });
+});
 </script>
 </body>
