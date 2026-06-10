@@ -1,110 +1,141 @@
-// =====================
-//  KOSZYK - cart.js
-// =====================
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Koszyk — TinyHugs</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body data-page="cart">
+<div id="nav-placeholder"></div>
 
-const CART_KEY = "tinyhugs_cart";
+<main class="cart-page">
+  <h1>🧸 Twój koszyk</h1>
+  <div id="cart-root"></div>
+</main>
 
-// Pobierz koszyk z localStorage
-function getCart() {
-  const raw = localStorage.getItem(CART_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
+<footer class="footer-full">
+  <div class="footer-bottom" style="max-width:980px;margin:0 auto;padding:1.2rem 2rem;">
+    <span>&copy; 2025 <strong>TinyHugs</strong> — Wszystkie prawa zastrzeżone</span>
+    <div class="footer-payments">
+      <span class="pay-badge">VISA</span>
+      <span class="pay-badge">Mastercard</span>
+      <span class="pay-badge">BLIK</span>
+      <span class="pay-badge">Przelew</span>
+    </div>
+  </div>
+</footer>
 
-// Zapisz koszyk do localStorage
-function saveCart(cart) {
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  updateCartIcon();
-}
+<script src="i18n.js"></script>
+<script src="nav.js"></script>
+<script src="products.js"></script>
+<script src="cart.js"></script>
+<script>
+renderNav("cart");
 
-// Dodaj produkt do koszyka
-function addToCart(productId, quantity = 1) {
+function renderCart() {
+  const root = document.getElementById("cart-root");
   const cart = getCart();
-  const product = getProductById(productId);
-  if (!product) return;
 
-  const existing = cart.find(item => item.id === productId);
-  if (existing) {
-    existing.quantity += quantity;
-  } else {
-    cart.push({ id: productId, quantity });
+  if (cart.length === 0) {
+    root.innerHTML = `
+      <div class="empty-cart">
+        <div class="emoji">🛒</div>
+        <h2>Koszyk jest pusty</h2>
+        <p>Dodaj misie lub ubranka, żeby zacząć zakupy.</p>
+        <a href="index.html" class="btn-primary">🐻 Wróć do sklepu</a>
+      </div>`;
+    return;
   }
 
-  saveCart(cart);
-  showCartToast(product.name + " " + product.variant);
-}
+  const total    = getCartTotal();
+  const count    = getCartCount();
+  const freeAt   = 119;
+  const isFree   = total >= freeAt;
+  const shipping = isFree ? 0 : 14.99;
+  const grand    = total + shipping;
+  const progress = Math.min(100, (total / freeAt) * 100);
 
-// Usuń produkt z koszyka
-function removeFromCart(productId) {
-  const cart = getCart().filter(item => item.id !== productId);
-  saveCart(cart);
-}
+  const itemsHTML = cart.map((item, idx) => {
+    const p = getProductById(item.id);
+    if (!p) return "";
+    return `
+      <div class="cart-item" style="animation-delay:${idx * 0.07}s">
+        <div class="cart-item-img">
+          <img src="${p.image}" alt="${p.name}" onerror="this.src='img/placeholder.jpg'"/>
+        </div>
+        <div class="cart-item-info">
+          <div class="cart-item-name">${p.name}</div>
+          <div class="cart-item-variant">
+            <span class="color-dot" style="background:${p.color}"></span> ${p.variant}
+          </div>
+          <div class="cart-item-price">${formatPrice(p.price)} / szt.</div>
+          <div class="cart-item-actions">
+            <button class="qty-btn" data-action="minus" data-id="${p.id}">−</button>
+            <span class="qty-value">${item.quantity}</span>
+            <button class="qty-btn" data-action="plus" data-id="${p.id}">+</button>
+            <button class="remove-btn" data-action="remove" data-id="${p.id}">Usuń</button>
+          </div>
+        </div>
+        <div style="font-weight:800;color:var(--brown);font-size:1.05rem;flex-shrink:0;text-align:right;">
+          ${formatPrice(p.price * item.quantity)}
+        </div>
+      </div>`;
+  }).join("");
 
-// Zmień ilość produktu
-function updateQuantity(productId, quantity) {
-  const cart = getCart();
-  const item = cart.find(i => i.id === productId);
-  if (item) {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-    item.quantity = quantity;
-    saveCart(cart);
-  }
-}
+  root.innerHTML = `
+    <div class="cart-layout">
+      <div class="cart-items">${itemsHTML}</div>
+      <div class="cart-summary">
+        <h2>Podsumowanie</h2>
+        <div class="free-ship-bar">
+          ${isFree
+            ? `<span>🎉 Masz darmową dostawę!</span>`
+            : `<span>Brakuje <strong>${formatPrice(freeAt - total)}</strong> do darmowej dostawy</span>`}
+          <div class="free-ship-progress">
+            <div class="free-ship-fill" style="width:${progress}%"></div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span>Produkty (${count} szt.)</span>
+          <span>${formatPrice(total)}</span>
+        </div>
+        <div class="summary-row">
+          <span>Dostawa</span>
+          <span>${isFree ? '<span style="color:#3a8a4a;font-weight:700;">Darmowa 🎉</span>' : formatPrice(shipping)}</span>
+        </div>
+        <div class="summary-row total">
+          <span>Razem</span>
+          <span>${formatPrice(grand)}</span>
+        </div>
+        <a href="checkout.html" class="checkout-btn">Przejdź do kasy →</a>
+        <a href="index.html" class="continue-btn">← Kontynuuj zakupy</a>
+      </div>
+    </div>`;
 
-// Wyczyść koszyk
-function clearCart() {
-  localStorage.removeItem(CART_KEY);
-  updateCartIcon();
-}
-
-// Policz łączną liczbę produktów
-function getCartCount() {
-  return getCart().reduce((sum, item) => sum + item.quantity, 0);
-}
-
-// Policz łączną cenę
-function getCartTotal() {
-  return getCart().reduce((sum, item) => {
-    const product = getProductById(item.id);
-    return sum + (product ? product.price * item.quantity : 0);
-  }, 0);
-}
-
-// Aktualizuj ikonę koszyka w nawigacji
-function updateCartIcon() {
-  const badge = document.getElementById("cart-badge");
-  if (!badge) return;
-  const count = getCartCount();
-  badge.textContent = count;
-  badge.style.display = count > 0 ? "flex" : "none";
-}
-
-// Toast powiadomienie po dodaniu do koszyka
-function showCartToast(name) {
-  let toast = document.getElementById("cart-toast");
-  if (!toast) {
-    toast = document.createElement("div");
-    toast.id = "cart-toast";
-    document.body.appendChild(toast);
-  }
-  toast.textContent = `🧸 ${name} dodano do koszyka!`;
-  toast.classList.add("show");
-  clearTimeout(toast._timeout);
-  toast._timeout = setTimeout(() => toast.classList.remove("show"), 2500);
-}
-
-// Inicjalizacja - czeka aż nav będzie gotowy
-document.addEventListener("DOMContentLoaded", () => {
-  // Spróbuj od razu
-  updateCartIcon();
-  // Obserwuj DOM żeby złapać badge gdy nav.js go wstrzyknie
-  const observer = new MutationObserver(() => {
-    if (document.getElementById("cart-badge")) {
-      updateCartIcon();
-      observer.disconnect();
-    }
+  // Event delegation
+  document.getElementById("cart-root").addEventListener("click", e => {
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
+    const id  = btn.dataset.id;
+    const act = btn.dataset.action;
+    if (act === "minus")  changeQty(id, -1);
+    if (act === "plus")   changeQty(id,  1);
+    if (act === "remove") { removeFromCart(id); renderCart(); }
   });
-  observer.observe(document.body, { childList: true, subtree: true });
-});
+}
+
+function changeQty(id, delta) {
+  const cart = getCart();
+  const item = cart.find(i => i.id === id);
+  if (!item) return;
+  const newQty = item.quantity + delta;
+  if (newQty <= 0) { removeFromCart(id); renderCart(); return; }
+  updateQuantity(id, newQty);
+  renderCart();
+}
+
+renderCart();
+</script>
+</body>
+</html>
