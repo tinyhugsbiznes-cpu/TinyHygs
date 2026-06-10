@@ -682,8 +682,10 @@ function placeOrder() {
   alert("✅ Zamówienie złożone! Zaraz zintegrujemy płatność Stripe.");
 }
 
-// ===== MAPA (InPost GeoWidget) =====
+// ===== MAPA PACZKOMATÓW (Leaflet + InPost API) =====
 let mapInited = false;
+let leafletMap = null;
+let markersCluster = null;
 
 function initMap() {
   if (mapInited) return;
@@ -691,96 +693,121 @@ function initMap() {
 
   const wrapper = document.getElementById("paczkomat-map-wrapper");
   wrapper.innerHTML = `
-    <p style="font-size:0.82rem;color:var(--text-muted);margin:0.8rem 0 0.6rem;">
-      Kliknij paczkomat na mapie lub wyszukaj miasto:
-    </p>
-    <div id="easypack-map" style="width:100%;height:400px;border-radius:14px;border:2px solid var(--border);overflow:hidden;"></div>
+    <div style="margin:0.8rem 0 0.6rem;display:flex;gap:0.5rem;">
+      <input id="pm-search" type="text" placeholder="Wpisz miasto np. Warszawa, Ustka..."
+        style="flex:1;padding:0.6rem 1rem;border:2px solid var(--border);border-radius:12px;font-size:0.88rem;font-family:var(--font-body);outline:none;"/>
+      <button onclick="searchCity()"
+        style="background:var(--brown);color:#fff;padding:0.6rem 1rem;border-radius:12px;font-size:0.85rem;font-weight:700;border:none;cursor:pointer;">
+        🔍 Szukaj
+      </button>
+    </div>
+    <div id="pm-map" style="width:100%;height:400px;border-radius:14px;border:2px solid var(--border);overflow:hidden;"></div>
+    <div id="pm-status" style="text-align:center;font-size:0.82rem;color:var(--text-muted);margin-top:0.5rem;"></div>
   `;
 
-  // Załaduj CSS
-  if (!document.getElementById("easypack-css")) {
-    const css = document.createElement("link");
-    css.id   = "easypack-css";
-    css.rel  = "stylesheet";
-    css.href = "https://geowidget.easypack24.net/stylesheets/inpost-geowidget.css";
-    document.head.appendChild(css);
-  }
+  // Załaduj Leaflet
+  const css = document.createElement("link");
+  css.rel = "stylesheet";
+  css.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
+  document.head.appendChild(css);
 
-  // Załaduj JS i zainicjuj widget
-  if (!document.getElementById("easypack-js")) {
-    const js = document.createElement("script");
-    js.id  = "easypack-js";
-    js.src = "https://geowidget.easypack24.net/js/sdk-for-js.js";
-    js.onload = () => initEasyPack();
-    js.onerror = () => initFallbackMap();
-    document.head.appendChild(js);
-  } else {
-    initEasyPack();
-  }
+  const js = document.createElement("script");
+  js.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+  js.onload = () => startMap();
+  document.head.appendChild(js);
 }
 
-function initEasyPack() {
-  try {
-    easyPack.init({
-      defaultLocale: "pl",
-      mapType: "osm",
-      searchType: "osm",
-      points: { types: ["parcel_locker"] },
-      display: { showTypesFilters: false, nearestAvailable: true },
+function startMap() {
+  leafletMap = L.map("pm-map").setView([52.0, 19.5], 6);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap", maxZoom: 19
+  }).addTo(leafletMap);
+
+  document.getElementById("pm-status").textContent = "⏳ Ładowanie paczkomatów...";
+
+  // InPost API - publiczne, bez klucza, przez proxy CORS
+  const url = "https://api.inpost.pl/v1/points?type=parcel_locker&fields=name,address,location&per_page=20000&page=1";
+  const proxy = "https://corsproxy.io/?" + encodeURIComponent(url);
+
+  fetch(proxy)
+    .then(r => r.json())
+    .then(data => {
+      const items = data.items || [];
+      if (items.length > 0) {
+        addMarkers(items);
+        document.getElementById("pm-status").textContent = `✅ Załadowano ${items.length} paczkomatów`;
+      } else {
+        throw new Error("Brak danych");
+      }
+    })
+    .catch(() => {
+      // Drugi proxy
+      fetch("https://api.allorigins.win/get?url=" + encodeURIComponent(url))
+        .then(r => r.json())
+        .then(data => {
+          const parsed = JSON.parse(data.contents);
+          const items = parsed.items || [];
+          if (items.length > 0) {
+            addMarkers(items);
+            document.getElementById("pm-status").textContent = `✅ Załadowano ${items.length} paczkomatów`;
+          } else throw new Error("Brak");
+        })
+        .catch(() => {
+          addMarkers(FALLBACK_PACZKOMATY.map(p => ({
+            name: p.name,
+            location: { latitude: p.lat, longitude: p.lng },
+            address: { line1: p.address, line2: p.city }
+          })));
+          document.getElementById("pm-status").textContent = "⚠️ Tryb offline — pokazuję główne miasta";
+        });
     });
-    easyPack.mapWidget("easypack-map", (point) => {
-      const street = point.address?.line1 || point.location_description || "";
-      const city   = point.address?.line2 || point.city || "";
-      selectPaczkomat(point.name, street, city);
-    });
-  } catch(e) {
-    initFallbackMap();
-  }
 }
 
-function initFallbackMap() {
-  // Leaflet fallback jeśli widget niedostępny
-  const mapDiv = document.getElementById("easypack-map");
-  if (!mapDiv) return;
+function addMarkers(items) {
+  const icon = L.divIcon({
+    className: "",
+    html: `<div style="background:#E8899F;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
+    iconSize: [12,12], iconAnchor: [6,6], popupAnchor: [0,-8]
+  });
 
-  const lCss = document.createElement("link");
-  lCss.rel = "stylesheet";
-  lCss.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
-  document.head.appendChild(lCss);
+  items.forEach(p => {
+    const lat  = p.location?.latitude;
+    const lng  = p.location?.longitude;
+    const name = p.name || "";
+    const str  = p.address?.line1 || "";
+    const city = p.address?.line2 || "";
+    if (!lat || !lng) return;
 
-  const lJs = document.createElement("script");
-  lJs.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
-  lJs.onload = () => {
-    const map = L.map("easypack-map").setView([52.0, 19.5], 6);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap"
-    }).addTo(map);
-
-    const icon = L.divIcon({
-      className: "",
-      html: `<div style="background:#E8899F;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.4)"></div>`,
-      iconSize: [14,14], iconAnchor: [7,7], popupAnchor: [0,-10]
-    });
-
-    FALLBACK_PACZKOMATY.forEach(p => {
-      const m = L.marker([p.lat, p.lng], {icon});
-      m.bindPopup(`
-        <div style="font-family:sans-serif;">
-          <strong style="font-size:0.88rem;">📦 ${p.name}</strong><br/>
-          <span style="font-size:0.78rem;color:#888;">${p.address}, ${p.city}</span><br/>
-          <span style="font-size:0.72rem;color:#3a8a4a;font-weight:700;">✅ Czynny 24/7</span><br/>
-          <button onclick="selectPaczkomat('${p.name}','${p.address}','${p.city}')"
-            style="margin-top:6px;width:100%;padding:6px;background:#8B5E3C;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.8rem;font-weight:700;">
-            Wybierz
-          </button>
-        </div>`, {maxWidth:200});
-      m.addTo(map);
-    });
-  };
-  document.head.appendChild(lJs);
+    const marker = L.marker([lat, lng], { icon });
+    marker.bindPopup(`
+      <div style="font-family:sans-serif;min-width:160px;">
+        <div style="font-weight:800;font-size:0.9rem;margin-bottom:3px;">📦 ${name}</div>
+        <div style="font-size:0.78rem;color:#888;margin-bottom:4px;line-height:1.4;">${str}<br/>${city}</div>
+        <div style="font-size:0.72rem;color:#3a8a4a;font-weight:700;margin-bottom:6px;">✅ Czynny 24/7</div>
+        <button onclick="selectPaczkomat('${name}','${str.replace(/'/g,"\'")}','${city.replace(/'/g,"\'")}');leafletMap.closePopup();"
+          style="width:100%;padding:6px;background:#8B5E3C;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:700;">
+          Wybierz ten paczkomat
+        </button>
+      </div>`, { maxWidth: 220 });
+    marker.addTo(leafletMap);
+  });
 }
 
-function searchPaczkomat() { /* GeoWidget ma wbudowane wyszukiwanie */ }
+function searchCity() {
+  const q = document.getElementById("pm-search")?.value?.trim();
+  if (!q || !leafletMap) return;
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q + ", Polska")}&format=json&limit=1`)
+    .then(r => r.json())
+    .then(res => {
+      if (res.length) {
+        leafletMap.setView([+res[0].lat, +res[0].lon], 14);
+      } else {
+        alert("Nie znaleziono miejscowości: " + q);
+      }
+    });
+}
+
+function searchPaczkomat() { searchCity(); }
 
 // ===== PODSUMOWANIE =====
 function renderSummary() {
