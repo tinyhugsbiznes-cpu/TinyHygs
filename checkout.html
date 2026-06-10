@@ -524,6 +524,7 @@
 </main>
 
 
+<script src="paczkomaty.js"></script>
 <script src="i18n.js"></script>
 <script src="nav.js"></script>
 <script src="products.js"></script>
@@ -723,44 +724,17 @@ function startMap() {
     attribution: "© OpenStreetMap", maxZoom: 19
   }).addTo(leafletMap);
 
-  document.getElementById("pm-status").textContent = "⏳ Ładowanie paczkomatów...";
-
-  // InPost API - publiczne, bez klucza, przez proxy CORS
-  const url = "https://api.inpost.pl/v1/points?type=parcel_locker&fields=name,address,location&per_page=20000&page=1";
-  const proxy = "https://corsproxy.io/?" + encodeURIComponent(url);
-
-  fetch(proxy)
-    .then(r => r.json())
-    .then(data => {
-      const items = data.items || [];
-      if (items.length > 0) {
-        addMarkers(items);
-        document.getElementById("pm-status").textContent = `✅ Załadowano ${items.length} paczkomatów`;
-      } else {
-        throw new Error("Brak danych");
-      }
-    })
-    .catch(() => {
-      // Drugi proxy
-      fetch("https://api.allorigins.win/get?url=" + encodeURIComponent(url))
-        .then(r => r.json())
-        .then(data => {
-          const parsed = JSON.parse(data.contents);
-          const items = parsed.items || [];
-          if (items.length > 0) {
-            addMarkers(items);
-            document.getElementById("pm-status").textContent = `✅ Załadowano ${items.length} paczkomatów`;
-          } else throw new Error("Brak");
-        })
-        .catch(() => {
-          addMarkers(FALLBACK_PACZKOMATY.map(p => ({
-            name: p.name,
-            location: { latitude: p.lat, longitude: p.lng },
-            address: { line1: p.address, line2: p.city }
-          })));
-          document.getElementById("pm-status").textContent = "⚠️ Tryb offline — pokazuję główne miasta";
-        });
-    });
+  // Użyj wbudowanych danych z paczkomaty.js
+  if (typeof PACZKOMATY_PL !== "undefined" && PACZKOMATY_PL.length > 0) {
+    addMarkers(PACZKOMATY_PL.map(p => ({
+      name: p.name,
+      location: { latitude: p.lat, longitude: p.lng },
+      address: { line1: p.address, line2: p.city }
+    })));
+    document.getElementById("pm-status").textContent = "✅ " + PACZKOMATY_PL.length + " paczkomatów załadowanych";
+  } else {
+    document.getElementById("pm-status").textContent = "⚠️ Błąd ładowania danych";
+  }
 }
 
 function addMarkers(items) {
